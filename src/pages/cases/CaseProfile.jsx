@@ -77,7 +77,10 @@ export default function CaseProfile() {
           <h1 className="text-2xl font-bold text-primary">{caseRecord.case_title}</h1>
           <p className="text-gray-500 mt-1">{caseRecord.case_number}</p>
         </div>
-        <Link to={`/cases/${id}/edit`} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Edit</Link>
+        <div className="flex gap-2">
+          <Link to={`/cases/${id}/tasks`} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Tasks</Link>
+          <Link to={`/cases/${id}/edit`} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Edit</Link>
+        </div>
       </div>
 
       {error && <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">{error}</div>}
@@ -91,7 +94,10 @@ export default function CaseProfile() {
           <span className="px-2 py-0.5 text-xs rounded bg-accent/20 text-primary">{caseRecord.priority}</span>
         </div>
         <dl className="px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><dt className="text-sm text-gray-500">Court</dt><dd className="font-medium">{caseRecord.court_name || '—'}</dd></div>
+          <div><dt className="text-sm text-gray-500">Court</dt><dd className="font-medium">{caseRecord.Court?.name || '—'}</dd></div>
+          <div><dt className="text-sm text-gray-500">Bench</dt><dd className="font-medium">{caseRecord.Bench?.name || '—'}</dd></div>
+          <div><dt className="text-sm text-gray-500">Judge</dt><dd className="font-medium">{caseRecord.Judge?.name || '—'}</dd></div>
+          <div><dt className="text-sm text-gray-500">Courtroom</dt><dd className="font-medium">{caseRecord.Courtroom ? 'Room ' + caseRecord.Courtroom.room_number + (caseRecord.Courtroom.floor != null ? ' (Floor ' + caseRecord.Courtroom.floor + ')' : '') : '—'}</dd></div>
           <div><dt className="text-sm text-gray-500">Filing date</dt><dd className="font-medium">{caseRecord.filing_date || '—'}</dd></div>
           <div><dt className="text-sm text-gray-500">Next hearing</dt><dd className="font-medium">{caseRecord.next_hearing_date || '—'}</dd></div>
           <div className="md:col-span-2"><dt className="text-sm text-gray-500">Assigned to</dt><dd className="font-medium">{caseRecord.Assignee?.name || '—'}</dd></div>

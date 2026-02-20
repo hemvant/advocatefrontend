@@ -5,10 +5,13 @@ import { useOrgAuth } from '../context/OrgAuthContext';
 const MODULE_LINKS = [
   { name: 'Client Management', path: '/clients', icon: '👤' },
   { name: 'Case Management', path: '/cases', icon: '📁' },
+  { name: 'Courts', path: '/courts', icon: '⚖️' },
+  { name: 'Tasks', path: '/tasks', icon: '✅' },
   { name: 'Document Management', path: '/documents', icon: '📄', end: false },
   { name: 'Billing', path: '/billing', icon: '💰' },
   { name: 'Calendar', path: '/calendar', icon: '📅' },
-  { name: 'Reports', path: '/reports', icon: '📊' }
+  { name: 'Reports', path: '/reports', icon: '📊' },
+  { name: 'Audit Logs', path: '/audit-logs', icon: '📋' }
 ];
 
 export default function OrgSidebar({ open = false, onClose }) {
@@ -61,9 +64,13 @@ export default function OrgSidebar({ open = false, onClose }) {
         >
           <span>🏠</span> Dashboard
         </NavLink>
-        {MODULE_LINKS.filter((item) =>
-          item.name === 'Calendar' ? (hasModule('Calendar') || hasModule('Case Management')) : hasModule(item.name)
-        ).map((item) => (
+        {MODULE_LINKS.filter((item) => {
+          if (item.name === 'Courts') return hasModule('Case Management');
+          if (item.name === 'Tasks') return hasModule('Case Management');
+          if (item.name === 'Calendar') return hasModule('Calendar') || hasModule('Case Management');
+          if (item.name === 'Audit Logs') return hasModule('Reports');
+          return hasModule(item.name);
+        }).map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

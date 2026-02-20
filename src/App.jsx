@@ -8,7 +8,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SuperAdminProtectedRoute from './components/SuperAdminProtectedRoute';
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
-import SuperAdminOrganizations from './pages/superadmin/SuperAdminOrganizations';
+import SuperAdminOrganizationsPage from './pages/superadmin/SuperAdminOrganizationsPage';
+import OrganizationDetailPage from './pages/superadmin/OrganizationDetailPage';
+import SubscriptionsPage from './pages/superadmin/SubscriptionsPage';
+import PlatformAuditLogsPage from './pages/superadmin/PlatformAuditLogsPage';
+import SystemHealthPage from './pages/superadmin/SystemHealthPage';
 import OrgLogin from './pages/org/OrgLogin';
 import OrgDashboard from './pages/org/OrgDashboard';
 import OrgEmployees from './pages/org/OrgEmployees';
@@ -27,6 +31,15 @@ import Placeholder from './pages/Placeholder';
 import CaseDocumentsPage from './pages/documents/CaseDocumentsPage';
 import DocumentListPage from './pages/documents/DocumentListPage';
 import DocumentDetailPage from './pages/documents/DocumentDetailPage';
+import CourtList from './pages/courts/CourtList';
+import CourtCreate from './pages/courts/CourtCreate';
+import CourtDetail from './pages/courts/CourtDetail';
+import JudgeList from './pages/judges/JudgeList';
+import BenchList from './pages/benches/BenchList';
+import CourtroomList from './pages/courtrooms/CourtroomList';
+import AuditLogsPage from './pages/audit/AuditLogsPage';
+import TasksPage from './pages/tasks/TasksPage';
+import CaseTasksPage from './pages/tasks/CaseTasksPage';
 
 export default function App() {
   return (
@@ -44,7 +57,11 @@ export default function App() {
           >
             <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
             <Route path="dashboard" element={<SuperAdminDashboard />} />
-            <Route path="organizations" element={<SuperAdminOrganizations />} />
+            <Route path="organizations" element={<SuperAdminOrganizationsPage />} />
+            <Route path="organizations/:id" element={<OrganizationDetailPage />} />
+            <Route path="subscriptions" element={<SubscriptionsPage />} />
+            <Route path="audit-logs" element={<PlatformAuditLogsPage />} />
+            <Route path="system-health" element={<SystemHealthPage />} />
           </Route>
 
           <Route path="/login" element={<OrgLogin />} />
@@ -68,7 +85,16 @@ export default function App() {
             <Route path="cases/create" element={<CaseCreate />} />
             <Route path="cases/:id" element={<CaseProfile />} />
             <Route path="cases/:id/edit" element={<CaseEdit />} />
+            <Route path="cases/:id/tasks" element={<CaseTasksPage />} />
             <Route path="cases/:id/documents" element={<CaseDocumentsPage />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="courts" element={<CourtList />} />
+            <Route path="courts/create" element={<CourtCreate />} />
+            <Route path="courts/:id" element={<CourtDetail />} />
+            <Route path="judges" element={<JudgeList />} />
+            <Route path="benches" element={<BenchList />} />
+            <Route path="courtrooms" element={<CourtroomList />} />
+            <Route path="audit-logs" element={<AuditLogsPage />} />
             <Route path="documents" element={<DocumentListPage />} />
             <Route path="documents/:id" element={<DocumentDetailPage />} />
             <Route path="billing" element={<Placeholder />} />

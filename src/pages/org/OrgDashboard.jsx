@@ -2,15 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useOrgAuth } from '../../context/OrgAuthContext';
 import { getDashboardHearings } from '../../services/hearingApi';
+import { getTaskDashboard } from '../../services/taskApi';
 
 export default function OrgDashboard() {
   const { user, hasModule } = useOrgAuth();
   const [hearings, setHearings] = useState({ todays: [], upcoming: [], overdue: [] });
+  const [tasks, setTasks] = useState({ myTasks: [], overdue: [], upcoming: [] });
 
   useEffect(() => {
     if (hasModule('Case Management')) {
       getDashboardHearings()
         .then(({ data }) => setHearings(data.data || { todays: [], upcoming: [], overdue: [] }))
+        .catch(() => {});
+      getTaskDashboard()
+        .then(({ data }) => setTasks(data.data || { myTasks: [], overdue: [], upcoming: [] }))
         .catch(() => {});
     }
   }, [hasModule]);
@@ -36,6 +41,51 @@ export default function OrgDashboard() {
 
       {showHearings && (
         <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-primary/5 flex justify-between items-center">
+                <h2 className="text-lg font-semibold text-primary">My tasks</h2>
+                <Link to="/tasks" className="text-sm text-accent hover:underline">View all</Link>
+              </div>
+              <ul className="divide-y divide-gray-200">
+                {tasks.myTasks?.length === 0 && <li className="px-6 py-4 text-gray-500 text-sm">No active tasks.</li>}
+                {tasks.myTasks?.slice(0, 5).map((t) => (
+                  <li key={t.id} className="px-6 py-3">
+                    <Link to="/tasks" className="font-medium text-primary hover:text-accent">{t.title}</Link>
+                    <p className="text-sm text-gray-500">{t.Case?.case_title} · Due: {t.due_date || '—'}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
+                <h2 className="text-lg font-semibold text-primary">Overdue tasks</h2>
+              </div>
+              <ul className="divide-y divide-gray-200">
+                {tasks.overdue?.length === 0 && <li className="px-6 py-4 text-gray-500 text-sm">None.</li>}
+                {tasks.overdue?.slice(0, 5).map((t) => (
+                  <li key={t.id} className="px-6 py-3">
+                    <Link to="/tasks" className="font-medium text-primary hover:text-accent">{t.title}</Link>
+                    <p className="text-sm text-gray-500">{t.Case?.case_title} · {t.due_date}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-green-50">
+                <h2 className="text-lg font-semibold text-primary">Upcoming tasks (7 days)</h2>
+              </div>
+              <ul className="divide-y divide-gray-200">
+                {tasks.upcoming?.length === 0 && <li className="px-6 py-4 text-gray-500 text-sm">None.</li>}
+                {tasks.upcoming?.slice(0, 5).map((t) => (
+                  <li key={t.id} className="px-6 py-3">
+                    <Link to="/tasks" className="font-medium text-primary hover:text-accent">{t.title}</Link>
+                    <p className="text-sm text-gray-500">{t.Case?.case_title} · {t.due_date}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 bg-amber-50 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-primary">Today&apos;s Hearings</h2>
