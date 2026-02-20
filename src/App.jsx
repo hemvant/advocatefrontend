@@ -28,6 +28,7 @@ import CaseEdit from './pages/cases/CaseEdit';
 import CalendarPage from './pages/calendar/CalendarPage';
 import HearingDetail from './pages/calendar/HearingDetail';
 import Placeholder from './pages/Placeholder';
+import AnalyticsPage from './pages/reports/AnalyticsPage';
 import CaseDocumentsPage from './pages/documents/CaseDocumentsPage';
 import DocumentListPage from './pages/documents/DocumentListPage';
 import DocumentDetailPage from './pages/documents/DocumentDetailPage';
@@ -100,7 +101,7 @@ export default function App() {
             <Route path="billing" element={<Placeholder />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="hearings/:id" element={<HearingDetail />} />
-            <Route path="reports" element={<Placeholder />} />
+            <Route path="reports" element={<AnalyticsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
