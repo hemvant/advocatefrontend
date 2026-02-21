@@ -9,13 +9,19 @@ export default function CaseCreate() {
   const [error, setError] = useState('');
 
   const handleSubmit = async (payload) => {
+    if (loading) return;
     setLoading(true);
     setError('');
     try {
       const { data } = await createCase(payload);
-      navigate(`/cases/${data.data.id}`);
+      if (data && data.data && data.data.id) {
+        navigate(`/cases/${data.data.id}`, { replace: true });
+        return;
+      }
+      setError('Create failed');
     } catch (err) {
-      setError(err.response?.data?.message || 'Create failed');
+      const msg = err.response?.data?.message || err.message || 'Create failed';
+      setError(msg);
     } finally {
       setLoading(false);
     }

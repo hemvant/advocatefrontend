@@ -6,61 +6,26 @@ const ENTITY_TYPES = ['CLIENT', 'CASE', 'HEARING', 'DOCUMENT', 'COURT', 'EMPLOYE
 const ACTION_TYPES = ['CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'LOGIN', 'LOGOUT', 'VIEW', 'DOWNLOAD', 'ASSIGN', 'MODULE_CHANGE'];
 const MODULES = ['DOCUMENTS', 'HEARINGS', 'CASES', 'CLIENTS', 'COURTS', 'AUTH', 'EMPLOYEES', 'REPORTS'];
 
-function DetailRow({ row, expanded, onToggle }) {
+function DetailButton({ row, expanded, onToggle }) {
   const hasOld = row.old_value != null && typeof row.old_value === 'object' && Object.keys(row.old_value).length > 0;
   const hasNew = row.new_value != null && typeof row.new_value === 'object' && Object.keys(row.new_value).length > 0;
   const hasDetails = hasOld || hasNew || row.ip_address || row.user_agent;
 
   return (
-    <>
-      <td className="px-4 py-2 text-sm">
-        {hasDetails && (
-          <button
-            type="button"
-            onClick={onToggle}
-            className="text-primary font-medium hover:underline"
-            aria-expanded={expanded}
-          >
-            {expanded ? '▼ Hide details' : '▶ View details'}
-          </button>
-        )}
-        {!hasDetails && <span className="text-gray-400">—</span>}
-      </td>
-      {expanded && (
-        <td colSpan={6} className="px-4 py-3 bg-gray-50 border-t-0 border-b border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            {row.ip_address && (
-              <div>
-                <span className="font-medium text-gray-500">IP address</span>
-                <p className="font-mono text-gray-800">{row.ip_address}</p>
-              </div>
-            )}
-            {row.user_agent && (
-              <div>
-                <span className="font-medium text-gray-500">Device / User agent</span>
-                <p className="text-gray-800 break-all">{row.user_agent}</p>
-              </div>
-            )}
-            {hasOld && (
-              <div className="md:col-span-2">
-                <span className="font-medium text-red-600">Old values</span>
-                <pre className="mt-1 p-2 bg-white border border-gray-200 rounded text-xs font-mono overflow-auto max-h-40">
-                  {JSON.stringify(row.old_value, null, 2)}
-                </pre>
-              </div>
-            )}
-            {hasNew && (
-              <div className="md:col-span-2">
-                <span className="font-medium text-green-700">New values</span>
-                <pre className="mt-1 p-2 bg-white border border-gray-200 rounded text-xs font-mono overflow-auto max-h-40">
-                  {JSON.stringify(row.new_value, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        </td>
+    <td className="px-4 py-2 text-sm">
+      {hasDetails ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="text-primary font-medium hover:underline"
+          aria-expanded={expanded}
+        >
+          {expanded ? '▼ Hide details' : '▶ View details'}
+        </button>
+      ) : (
+        <span className="text-gray-400">—</span>
       )}
-    </>
+    </td>
   );
 }
 

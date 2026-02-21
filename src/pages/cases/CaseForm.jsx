@@ -84,6 +84,7 @@ export default function CaseForm({ caseRecord, onSubmit, loading }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (loading) return;
     const payload = {
       client_id: parseInt(form.client_id, 10),
       case_title: form.case_title,
