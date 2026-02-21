@@ -11,10 +11,13 @@ export default function PackagesPage() {
   const [form, setForm] = useState({
     name: '',
     description: '',
-    price_monthly: '',
-    price_annual: '',
+    price_monthly: '0',
+    price_annual: '0',
     annual_discount_percent: '0',
     employee_limit: '5',
+    duration_days: '30',
+    is_demo: false,
+    is_active: true,
     module_ids: []
   });
   const [saving, setSaving] = useState(false);
@@ -31,7 +34,7 @@ export default function PackagesPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', description: '', price_monthly: '', price_annual: '', annual_discount_percent: '0', employee_limit: '5', module_ids: [] });
+    setForm({ name: '', description: '', price_monthly: '0', price_annual: '0', annual_discount_percent: '0', employee_limit: '5', duration_days: '30', is_demo: false, is_active: true, module_ids: [] });
     setModalOpen(true);
   };
 
@@ -40,10 +43,13 @@ export default function PackagesPage() {
     setForm({
       name: pkg.name || '',
       description: pkg.description || '',
-      price_monthly: String(pkg.price_monthly ?? ''),
-      price_annual: String(pkg.price_annual ?? ''),
+      price_monthly: String(pkg.price_monthly ?? '0'),
+      price_annual: String(pkg.price_annual ?? '0'),
       annual_discount_percent: String(pkg.annual_discount_percent ?? '0'),
       employee_limit: String(pkg.employee_limit ?? '5'),
+      duration_days: pkg.is_demo ? '7' : String(pkg.duration_days ?? '30'),
+      is_demo: !!pkg.is_demo,
+      is_active: pkg.is_active !== false,
       module_ids: (pkg.Modules || []).map((m) => m.id)
     });
     setModalOpen(true);
@@ -61,10 +67,16 @@ export default function PackagesPage() {
         price_annual: parseFloat(form.price_annual) || 0,
         annual_discount_percent: parseFloat(form.annual_discount_percent) || 0,
         employee_limit: parseInt(form.employee_limit, 10) || 1,
+        duration_days: form.is_demo ? 7 : (parseInt(form.duration_days, 10) || 30),
+        is_demo: !!form.is_demo,
         module_ids: form.module_ids
       };
-      if (editing) await updatePackage(editing.id, payload);
-      else await createPackage(payload);
+      if (editing) {
+        payload.is_active = form.is_active;
+        await updatePackage(editing.id, payload);
+      } else {
+        await createPackage(payload);
+      }
       setModalOpen(false);
       load();
     } catch (err) {
@@ -107,19 +119,25 @@ export default function PackagesPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monthly</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Annual</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employees</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Modules</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {packages.map((pkg) => (
               <tr key={pkg.id}>
-                <td className="px-6 py-4 font-medium">{pkg.name}</td>
+                <td className="px-6 py-4 font-medium">{pkg.name} {pkg.is_demo ? <span className="text-xs text-gray-500">(Demo)</span> : ''}</td>
                 <td className="px-6 py-4 text-sm">{pkg.price_monthly}</td>
                 <td className="px-6 py-4 text-sm">{pkg.price_annual}</td>
+                <td className="px-6 py-4 text-sm">{pkg.duration_days ?? '—'} days</td>
                 <td className="px-6 py-4 text-sm">{pkg.employee_limit}</td>
                 <td className="px-6 py-4 text-sm">{(pkg.Modules || []).map((m) => m.name).join(', ') || '—'}</td>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded ${pkg.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>{pkg.is_active ? 'Active' : 'Inactive'}</span>
+                </td>
                 <td className="px-6 py-4 text-right text-sm">
                   <button type="button" onClick={() => openEdit(pkg)} className="text-primary hover:underline mr-3">Edit</button>
                   <button type="button" onClick={() => handleDelete(pkg)} className="text-red-600 hover:underline">Delete</button>
@@ -160,9 +178,26 @@ export default function PackagesPage() {
                 <input type="number" step="0.01" min="0" max="100" value={form.annual_discount_percent} onChange={(e) => setForm((f) => ({ ...f, annual_discount_percent: e.target.value }))} className="w-full px-3 py-2 border rounded-lg" />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (days) *</label>
+                <input type="number" min="1" value={form.duration_days} onChange={(e) => setForm((f) => ({ ...f, duration_days: e.target.value }))} className="w-full px-3 py-2 border rounded-lg" required readOnly={form.is_demo} />
+                {form.is_demo && <p className="text-xs text-gray-500 mt-1">Demo package is always 7 days.</p>}
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Employee limit *</label>
                 <input type="number" min="1" value={form.employee_limit} onChange={(e) => setForm((f) => ({ ...f, employee_limit: e.target.value }))} className="w-full px-3 py-2 border rounded-lg" required />
               </div>
+              {!editing && (
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.is_demo} onChange={(e) => setForm((f) => ({ ...f, is_demo: e.target.checked, duration_days: e.target.checked ? '7' : f.duration_days }))} />
+                  <span className="text-sm">Demo package (7 days, all modules)</span>
+                </label>
+              )}
+              {editing && (
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} />
+                  <span className="text-sm">Active</span>
+                </label>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Modules</label>
                 <div className="flex flex-wrap gap-2">

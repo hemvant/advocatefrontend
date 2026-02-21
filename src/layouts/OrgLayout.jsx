@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
+import { useOrgAuth } from '../context/OrgAuthContext';
 import OrgSidebar from '../components/OrgSidebar';
 import MobileHeader from '../components/MobileHeader';
+import ExpiredSubscriptionPage from '../pages/org/ExpiredSubscriptionPage';
 
 export default function OrgLayout() {
+  const { subscriptionInfo } = useOrgAuth();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [offline, setOffline] = useState(false);
+  const isExpired = subscriptionInfo?.isExpired === true;
+  const showExpiredPage = isExpired && location.pathname !== '/billing';
+
   useEffect(() => {
     setOffline(!navigator.onLine);
     const onOffline = () => setOffline(true);
@@ -32,7 +39,7 @@ export default function OrgLayout() {
       <MobileHeader onMenuClick={() => setSidebarOpen(true)} title="AdvocateLearn" />
       <main className={`flex-1 overflow-auto bg-white pt-14 md:pt-0 md:ml-64 min-h-screen safe-area-bottom ${offline ? 'pt-20 md:pt-10' : ''}`}>
         <div className="p-4 sm:p-6">
-          <Outlet />
+          {showExpiredPage ? <ExpiredSubscriptionPage /> : <Outlet />}
         </div>
       </main>
     </div>

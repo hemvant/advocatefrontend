@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getOrganizations, createOrganization, updateOrganization, getOrganizationModules, assignOrganizationModules, getAllModules, impersonateOrganization } from '../../services/superAdminApi';
+import { getOrganizations, createOrganization, updateOrganization, getOrganizationModules, assignOrganizationModules, getAllModules, impersonateOrganization, getPackages } from '../../services/superAdminApi';
 
 export default function SuperAdminOrganizationsPage() {
   const [list, setList] = useState([]);
@@ -10,6 +10,7 @@ export default function SuperAdminOrganizationsPage() {
   const [filters, setFilters] = useState({ status: '', subscription_plan: '', from_date: '', to_date: '', search: '' });
   const [modal, setModal] = useState(null);
   const [allModules, setAllModules] = useState([]);
+  const [packages, setPackages] = useState([]);
 
   const load = async (page = 1) => {
     setLoading(true);
@@ -37,9 +38,25 @@ export default function SuperAdminOrganizationsPage() {
   const handleSearch = () => load(1);
 
   const openCreate = async () => {
-    const { data } = await getAllModules();
-    setAllModules(data.data || []);
-    setModal({ type: 'create', form: { name: '', email: '', phone: '', address: '', subscription_plan: '', org_admin_name: '', org_admin_email: '', org_admin_password: '' } });
+    const [modRes, pkgRes] = await Promise.all([getAllModules(), getPackages({ is_active: 'true' })]);
+    setAllModules(modRes.data?.data || []);
+    const pkgList = pkgRes.data?.data || [];
+    setPackages(pkgList);
+    const demoPkg = pkgList.find((p) => p.name === 'Demo');
+    setModal({
+      type: 'create',
+      form: {
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        subscription_plan: '',
+        package_id: demoPkg ? String(demoPkg.id) : (pkgList[0] ? String(pkgList[0].id) : ''),
+        org_admin_name: '',
+        org_admin_email: '',
+        org_admin_password: ''
+      }
+    });
   };
 
   const openEdit = (org) => {
@@ -65,11 +82,14 @@ export default function SuperAdminOrganizationsPage() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await createOrganization(modal.form);
+      const payload = { ...modal.form };
+      if (payload.package_id) payload.package_id = parseInt(payload.package_id, 10);
+      else delete payload.package_id;
+      await createOrganization(payload);
       setModal(null);
       load(1);
-    } catch (e) {
-      setError(e.response?.data?.message || 'Create failed');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Create failed');
     }
   };
 
@@ -176,6 +196,13 @@ export default function SuperAdminOrganizationsPage() {
               <input placeholder="Organization name" required value={modal.form.name} onChange={(e) => setModal({ ...modal, form: { ...modal.form, name: e.target.value } })} className="w-full px-4 py-2 border rounded-lg" />
               <input placeholder="Organization email" type="email" value={modal.form.email} onChange={(e) => setModal({ ...modal, form: { ...modal.form, email: e.target.value } })} className="w-full px-4 py-2 border rounded-lg" />
               <input placeholder="Phone" value={modal.form.phone} onChange={(e) => setModal({ ...modal, form: { ...modal.form, phone: e.target.value } })} className="w-full px-4 py-2 border rounded-lg" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Package</label>
+                <select value={modal.form.package_id || ''} onChange={(e) => setModal({ ...modal, form: { ...modal.form, package_id: e.target.value } })} className="w-full px-4 py-2 border rounded-lg">
+                  <option value="">Auto (Demo)</option>
+                  {packages.map((p) => <option key={p.id} value={p.id}>{p.name} {p.is_demo ? '(Demo)' : ''}</option>)}
+                </select>
+              </div>
               <input placeholder="Org admin name" required value={modal.form.org_admin_name} onChange={(e) => setModal({ ...modal, form: { ...modal.form, org_admin_name: e.target.value } })} className="w-full px-4 py-2 border rounded-lg" />
               <input placeholder="Org admin email" type="email" required value={modal.form.org_admin_email} onChange={(e) => setModal({ ...modal, form: { ...modal.form, org_admin_email: e.target.value } })} className="w-full px-4 py-2 border rounded-lg" />
               <input placeholder="Org admin password" type="password" required minLength={8} value={modal.form.org_admin_password} onChange={(e) => setModal({ ...modal, form: { ...modal.form, org_admin_password: e.target.value } })} className="w-full px-4 py-2 border rounded-lg" />

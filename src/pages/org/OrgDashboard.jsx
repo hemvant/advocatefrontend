@@ -8,7 +8,7 @@ import PageLoader from '../../components/ui/PageLoader';
 import EmptyState from '../../components/ui/EmptyState';
 
 export default function OrgDashboard() {
-  const { user, hasModule } = useOrgAuth();
+  const { user, hasModule, subscriptionInfo } = useOrgAuth();
   const [hearings, setHearings] = useState({ todays: [], upcoming: [], overdue: [] });
   const [tasks, setTasks] = useState({ myTasks: [], overdue: [], upcoming: [] });
   const [docStats, setDocStats] = useState({ total: 0, processed: 0, pending: 0, recent: [] });
@@ -50,6 +50,41 @@ export default function OrgDashboard() {
       <p className="text-gray-600 mb-6">
         Welcome, {user?.name}. {user?.organization?.name && `(${user.organization.name})`}
       </p>
+
+      {subscriptionInfo && (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-4 mb-6">
+          <h2 className="text-lg font-semibold text-primary mb-3">Subscription</h2>
+          <div className="flex flex-wrap items-center gap-4">
+            <div>
+              <span className="text-sm text-gray-500">Current plan</span>
+              <p className="font-medium">{subscriptionInfo.package?.name ?? '—'}</p>
+            </div>
+            {subscriptionInfo.subscription?.expires_at && (
+              <div>
+                <span className="text-sm text-gray-500">Expires</span>
+                <p className="font-medium">{new Date(subscriptionInfo.subscription.expires_at).toLocaleString()}</p>
+              </div>
+            )}
+            {subscriptionInfo.remainingDays != null && (
+              <div>
+                <span className="text-sm text-gray-500">Remaining</span>
+                <p className="font-medium">
+                  {subscriptionInfo.isExpired ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Expired</span>
+                  ) : subscriptionInfo.remainingDays < 3 ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">{subscriptionInfo.remainingDays} days left</span>
+                  ) : (
+                    <span>{subscriptionInfo.remainingDays} days</span>
+                  )}
+                </p>
+              </div>
+            )}
+            {subscriptionInfo.isExpired && (
+              <Link to="/billing" className="text-sm text-accent font-medium hover:underline">Renew plan</Link>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 mb-6">
         <Link to="/documents" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium">Documents</Link>
