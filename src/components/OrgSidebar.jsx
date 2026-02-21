@@ -19,7 +19,7 @@ function UpgradeModal({ onClose }) {
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold text-primary mb-2">Upgrade Plan</h3>
-        <p className="text-gray-600 text-sm mb-4">This feature is not included in your current plan. Contact your administrator to upgrade.</p>
+        <p className="text-gray-600 text-sm mb-4">This feature is not included in your current plan.</p>
         <div className="flex gap-2">
           <NavLink to="/billing" className="flex-1 text-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium" onClick={onClose}>Upgrade Plan</NavLink>
           <a href="mailto:support@advocatelearn.com" className="flex-1 text-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium">Contact Administrator</a>

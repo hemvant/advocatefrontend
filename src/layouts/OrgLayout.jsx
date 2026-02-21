@@ -11,7 +11,8 @@ export default function OrgLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [offline, setOffline] = useState(false);
   const isExpired = subscriptionInfo?.isExpired === true;
-  const showExpiredPage = isExpired && location.pathname !== '/billing';
+  const allowedWhenExpired = ['/billing', '/profile'];
+  const showExpiredPage = isExpired && !allowedWhenExpired.some((p) => location.pathname === p || location.pathname.startsWith(p + '/'));
 
   useEffect(() => {
     setOffline(!navigator.onLine);

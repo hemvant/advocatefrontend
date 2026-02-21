@@ -36,8 +36,17 @@ export function OrgAuthProvider({ children }) {
 
   useEffect(() => {
     const handleLogout = () => { setUser(null); setSubscriptionInfo(null); };
+    const handleSubscriptionExpired = () => {
+      getMyModules()
+        .then((modRes) => setSubscriptionInfo(modRes.data?.data ?? null))
+        .catch(() => setSubscriptionInfo((prev) => (prev ? { ...prev, isExpired: true } : null)));
+    };
     window.addEventListener('auth:logout', handleLogout);
-    return () => window.removeEventListener('auth:logout', handleLogout);
+    window.addEventListener('subscription:expired', handleSubscriptionExpired);
+    return () => {
+      window.removeEventListener('auth:logout', handleLogout);
+      window.removeEventListener('subscription:expired', handleSubscriptionExpired);
+    };
   }, []);
 
   const loginSuccess = (userData) => setUser(userData);
