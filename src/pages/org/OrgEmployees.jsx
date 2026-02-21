@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getEmployees, createEmployee, updateEmployee, getEmployeeModules, assignEmployeeModules, getModules } from '../../services/orgApi';
+import { getEmployees, createEmployee, updateEmployee, getEmployeeModules, assignEmployeeModules, getModules, resetEmployeePassword } from '../../services/orgApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import PasswordInput from '../../components/PasswordInput';
 
 export default function OrgEmployees() {
   const { user, isOrgAdmin } = useOrgAuth();
@@ -9,6 +10,10 @@ export default function OrgEmployees() {
   const [error, setError] = useState('');
   const [modal, setModal] = useState(null);
   const [orgModules, setOrgModules] = useState([]);
+  const [resetPwdModal, setResetPwdModal] = useState(null);
+  const [resetPwdForm, setResetPwdForm] = useState({ new_password: '', confirm: '' });
+  const [resetPwdLoading, setResetPwdLoading] = useState(false);
+  const [resetPwdError, setResetPwdError] = useState('');
 
   const load = async () => {
     try {
@@ -74,6 +79,35 @@ export default function OrgEmployees() {
     }
   };
 
+  const openResetPassword = (emp) => {
+    setResetPwdModal(emp);
+    setResetPwdForm({ new_password: '', confirm: '' });
+    setResetPwdError('');
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!resetPwdModal) return;
+    setResetPwdError('');
+    if (resetPwdForm.new_password.length < 8) {
+      setResetPwdError('Password must be at least 8 characters');
+      return;
+    }
+    if (resetPwdForm.new_password !== resetPwdForm.confirm) {
+      setResetPwdError('Passwords do not match');
+      return;
+    }
+    setResetPwdLoading(true);
+    try {
+      await resetEmployeePassword(resetPwdModal.id, resetPwdForm.new_password);
+      setResetPwdModal(null);
+    } catch (err) {
+      setResetPwdError(err.response?.data?.message || 'Reset failed');
+    } finally {
+      setResetPwdLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -127,6 +161,7 @@ export default function OrgEmployees() {
                 {isOrgAdmin && (
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                     <button type="button" onClick={() => openEdit(emp)} className="text-accent hover:underline mr-3">Edit</button>
+                    <button type="button" onClick={() => openResetPassword(emp)} className="text-primary hover:underline mr-3">Reset password</button>
                     <button type="button" onClick={() => openModules(emp)} className="text-primary hover:underline">Modules</button>
                   </td>
                 )}
@@ -146,7 +181,10 @@ export default function OrgEmployees() {
             <form onSubmit={handleCreate} className="space-y-3">
               <input placeholder="Name" required value={modal.form.name} onChange={(e) => setModal({ ...modal, form: { ...modal.form, name: e.target.value } })} className="w-full px-4 py-2 border rounded-lg" />
               <input placeholder="Email" type="email" required value={modal.form.email} onChange={(e) => setModal({ ...modal, form: { ...modal.form, email: e.target.value } })} className="w-full px-4 py-2 border rounded-lg" />
-              <input placeholder="Password" type="password" required minLength={8} value={modal.form.password} onChange={(e) => setModal({ ...modal, form: { ...modal.form, password: e.target.value } })} className="w-full px-4 py-2 border rounded-lg" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <PasswordInput placeholder="Min 8 characters" required minLength={8} value={modal.form.password} onChange={(e) => setModal({ ...modal, form: { ...modal.form, password: e.target.value } })} />
+              </div>
               <select value={modal.form.role} onChange={(e) => setModal({ ...modal, form: { ...modal.form, role: e.target.value } })} className="w-full px-4 py-2 border rounded-lg">
                 <option value="EMPLOYEE">EMPLOYEE</option>
                 <option value="ORG_ADMIN">ORG_ADMIN</option>
@@ -175,6 +213,44 @@ export default function OrgEmployees() {
               <div className="flex gap-2 pt-2">
                 <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Save</button>
                 <button type="button" onClick={() => setModal(null)} className="px-4 py-2 border rounded-lg">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {resetPwdModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-primary mb-2">Reset password</h2>
+            <p className="text-sm text-gray-600 mb-4">Only org admin can reset employee passwords. New password for <strong>{resetPwdModal.name}</strong> ({resetPwdModal.email}).</p>
+            {resetPwdError && <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">{resetPwdError}</div>}
+            <form onSubmit={handleResetPassword} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">New password</label>
+                <PasswordInput
+                  value={resetPwdForm.new_password}
+                  onChange={(e) => setResetPwdForm((f) => ({ ...f, new_password: e.target.value }))}
+                  placeholder="Min 8 characters"
+                  minLength={8}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>
+                <PasswordInput
+                  value={resetPwdForm.confirm}
+                  onChange={(e) => setResetPwdForm((f) => ({ ...f, confirm: e.target.value }))}
+                  placeholder="Re-enter password"
+                  minLength={8}
+                  required
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="submit" disabled={resetPwdLoading} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50">
+                  {resetPwdLoading ? 'Resetting...' : 'Reset password'}
+                </button>
+                <button type="button" onClick={() => setResetPwdModal(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
               </div>
             </form>
           </div>

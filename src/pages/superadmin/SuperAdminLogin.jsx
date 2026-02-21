@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { superAdminLogin } from '../../services/superAdminApi';
 import { useSuperAdminAuth } from '../../context/SuperAdminAuthContext';
+import PasswordInput from '../../components/PasswordInput';
 
 export default function SuperAdminLogin() {
   const [email, setEmail] = useState('');
@@ -50,11 +51,9 @@ export default function SuperAdminLogin() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent outline-none"
                 required
                 autoComplete="current-password"
               />

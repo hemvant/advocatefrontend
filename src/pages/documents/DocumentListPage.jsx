@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { listDocuments, softDeleteDocument, downloadDocument } from '../../services/documentApi';
+import { listDocuments, searchDocuments, softDeleteDocument, downloadDocument } from '../../services/documentApi';
 import { listCases } from '../../services/caseApi';
 import UploadDocumentModal from '../../components/documents/UploadDocumentModal';
 
 const DOC_TYPES = ['PETITION', 'EVIDENCE', 'AGREEMENT', 'NOTICE', 'ORDER', 'OTHER'];
+
+const OCR_STATUS_BADGE = {
+  PENDING: 'bg-gray-100 text-gray-700',
+  PROCESSING: 'bg-blue-100 text-blue-700',
+  COMPLETED: 'bg-green-100 text-green-700',
+  FAILED: 'bg-red-100 text-red-700'
+};
 
 export default function DocumentListPage() {
   const [items, setItems] = useState([]);
@@ -13,6 +20,7 @@ export default function DocumentListPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [search, setSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [documentType, setDocumentType] = useState('');
   const [caseFilter, setCaseFilter] = useState('');
   const [loading, setLoading] = useState(true);
@@ -27,14 +35,22 @@ export default function DocumentListPage() {
 
   const load = async () => {
     setLoading(true);
+    setError('');
     try {
-      const params = { page, limit };
-      if (search.trim()) params.search = search.trim();
-      if (documentType) params.document_type = documentType;
-      if (caseFilter) params.case_id = caseFilter;
-      const { data } = await listDocuments(params);
-      setItems(data.data || []);
-      setTotal(data.total ?? 0);
+      if (searchQuery) {
+        const params = { q: searchQuery, page, limit };
+        if (caseFilter) params.case_id = caseFilter;
+        const { data } = await searchDocuments(params);
+        setItems(data.data || []);
+        setTotal(data.total ?? 0);
+      } else {
+        const params = { page, limit };
+        if (documentType) params.document_type = documentType;
+        if (caseFilter) params.case_id = caseFilter;
+        const { data } = await listDocuments(params);
+        setItems(data.data || []);
+        setTotal(data.total ?? 0);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load documents');
     } finally {
@@ -48,12 +64,12 @@ export default function DocumentListPage() {
 
   useEffect(() => {
     load();
-  }, [page, documentType, caseFilter]);
+  }, [page, documentType, caseFilter, searchQuery]);
 
   const handleSearch = (e) => {
     e.preventDefault();
+    setSearchQuery(search.trim());
     setPage(1);
-    load();
   };
 
   const handleDelete = async (doc) => {
@@ -109,7 +125,7 @@ export default function DocumentListPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Document name..."
+              placeholder="Document name or content (keyword search)..."
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
             />
           </div>
@@ -158,40 +174,63 @@ export default function DocumentListPage() {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Case</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Uploaded by</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Version</th>
+                    {!searchQuery && (
+                      <>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Uploaded by</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Version</th>
+                      </>
+                    )}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">OCR</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Preview</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {items.map((doc) => (
-                    <tr key={doc.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Link to={`/documents/${doc.id}`} className="text-primary font-medium hover:underline">
-                          {doc.document_name || doc.original_file_name || '—'}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {doc.Case ? (
-                          <Link to={`/cases/${doc.Case.id}/documents`} className="text-primary hover:underline">
-                            {doc.Case.case_title}
+                  {items.map((doc) => {
+                    const status = doc.ocr_status || 'PENDING';
+                    const preview = (doc.snippet || (doc.ocr_text && String(doc.ocr_text).slice(0, 150)) || '').trim();
+                    const caseTitle = doc.Case?.case_title || cases.find((c) => c.id === doc.case_id)?.case_title;
+                    return (
+                      <tr key={doc.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Link to={`/documents/${doc.id}`} className="text-primary font-medium hover:underline">
+                            {doc.document_name || doc.file_name || doc.original_file_name || '—'}
                           </Link>
-                        ) : '—'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{doc.document_type}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{doc.Uploader?.name || '—'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">v{doc.version_number}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '—'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <button type="button" onClick={() => handleDownload(doc)} className="text-primary hover:underline mr-3">Download</button>
-                        <button type="button" onClick={() => handleDelete(doc)} className="text-red-600 hover:underline">Delete</button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {doc.case_id ? (
+                            <Link to={`/cases/${doc.case_id}/documents`} className="text-primary hover:underline">
+                              {caseTitle || `Case #${doc.case_id}`}
+                            </Link>
+                          ) : caseTitle ? (
+                            <Link to={`/cases/${doc.Case?.id}/documents`} className="text-primary hover:underline">{caseTitle}</Link>
+                          ) : '—'}
+                        </td>
+                        {!searchQuery && (
+                          <>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{doc.document_type || '—'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{doc.Uploader?.name || '—'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{doc.version_number != null ? `v${doc.version_number}` : '—'}</td>
+                          </>
+                        )}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded ${OCR_STATUS_BADGE[status] || OCR_STATUS_BADGE.PENDING}`}>
+                            {status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 max-w-[200px] truncate" title={preview}>{preview || '—'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                          <button type="button" onClick={() => handleDownload(doc)} className="text-primary hover:underline mr-3">Download</button>
+                          <button type="button" onClick={() => handleDelete(doc)} className="text-red-600 hover:underline">Delete</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

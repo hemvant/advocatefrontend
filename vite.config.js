@@ -31,10 +31,11 @@ export default defineConfig({
     })
   ],
   server: {
+    host: "0.0.0.0",     // 🔥 important (allow network access)
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://192.168.1.6:5000',  // 🔥 backend IP
         changeOrigin: true
       }
     }

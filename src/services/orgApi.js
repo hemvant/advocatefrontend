@@ -10,5 +10,7 @@ export const createEmployee = (data) => api.post('/org/employees', data);
 export const updateEmployee = (id, data) => api.put(`/org/employees/${id}`, data);
 export const getEmployeeModules = (id) => api.get(`/org/employees/${id}/modules`);
 export const assignEmployeeModules = (id, moduleIds) => api.put(`/org/employees/${id}/modules`, { module_ids: moduleIds });
+export const resetEmployeePassword = (employeeId, newPassword) =>
+  api.put(`/org/employees/${employeeId}/reset-password`, { new_password: newPassword });
 
 export const getModules = () => api.get('/org/modules');

@@ -21,3 +21,5 @@ export const assignOrganizationModules = (id, moduleIds) => api.put(`/super-admi
 export const getAllModules = () => api.get('/super-admin/modules');
 export const getSubscriptions = () => api.get('/super-admin/subscriptions');
 export const getPlatformAuditLogs = (params) => api.get('/super-admin/audit-logs', { params });
+export const resetOrgAdminPassword = (organizationId, newPassword) =>
+  api.put(`/super-admin/organizations/${organizationId}/reset-admin-password`, { new_password: newPassword });

@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { useOrgAuth } from '../../context/OrgAuthContext';
 import { getDashboardHearings } from '../../services/hearingApi';
 import { getTaskDashboard } from '../../services/taskApi';
+import { getDocumentDashboard } from '../../services/documentApi';
 
 export default function OrgDashboard() {
   const { user, hasModule } = useOrgAuth();
   const [hearings, setHearings] = useState({ todays: [], upcoming: [], overdue: [] });
   const [tasks, setTasks] = useState({ myTasks: [], overdue: [], upcoming: [] });
+  const [docStats, setDocStats] = useState({ total: 0, processed: 0, pending: 0, recent: [] });
 
   useEffect(() => {
     if (hasModule('Case Management')) {
@@ -20,7 +22,16 @@ export default function OrgDashboard() {
     }
   }, [hasModule]);
 
+  useEffect(() => {
+    if (hasModule('Document Management')) {
+      getDocumentDashboard()
+        .then(({ data }) => setDocStats(data.data || { total: 0, processed: 0, pending: 0, recent: [] }))
+        .catch(() => {});
+    }
+  }, [hasModule]);
+
   const showHearings = hasModule('Case Management');
+  const showDocuments = hasModule('Document Management');
 
   return (
     <div>
@@ -38,6 +49,48 @@ export default function OrgDashboard() {
           <p className="text-gray-600 text-sm">{user?.role || '—'}</p>
         </div>
       </div>
+
+      {showDocuments && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-500 uppercase">Total Documents</h3>
+            <p className="text-2xl font-bold text-primary mt-1">{docStats.total}</p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-500 uppercase">Documents Processed</h3>
+            <p className="text-2xl font-bold text-green-600 mt-1">{docStats.processed}</p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-500 uppercase">Pending OCR</h3>
+            <p className="text-2xl font-bold text-amber-600 mt-1">{docStats.pending}</p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-500 uppercase">Recent Uploads</h3>
+            <p className="text-2xl font-bold text-primary mt-1">{docStats.recent?.length ?? 0}</p>
+          </div>
+        </div>
+      )}
+
+      {showDocuments && docStats.recent?.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-gray-200 bg-primary/5 flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-primary">Recent Uploads</h2>
+            <Link to="/documents" className="text-sm text-accent hover:underline">View all</Link>
+          </div>
+          <ul className="divide-y divide-gray-200">
+            {docStats.recent.slice(0, 5).map((doc) => (
+              <li key={doc.id} className="px-6 py-3">
+                <Link to={`/documents/${doc.id}`} className="font-medium text-primary hover:underline">
+                  {doc.document_name || 'Document'}
+                </Link>
+                <p className="text-sm text-gray-500">
+                  {doc.ocr_status || 'PENDING'} · {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : ''}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {showHearings && (
         <div className="space-y-6">
