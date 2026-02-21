@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { uploadDocument } from '../../services/documentApi';
 
 const DOC_TYPES = ['PETITION', 'EVIDENCE', 'AGREEMENT', 'NOTICE', 'ORDER', 'OTHER'];
+const ACCEPT_TYPES = '.pdf,.doc,.docx,.txt,.xls,.xlsx,image/jpeg,image/png,image/gif,image/webp';
+const MAX_FILE_SIZE_MB = 25;
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export default function UploadDocumentModal({ caseId, cases = [], onClose, onSuccess }) {
   const [selectedCaseId, setSelectedCaseId] = useState(caseId || '');
@@ -27,6 +30,16 @@ export default function UploadDocumentModal({ caseId, cases = [], onClose, onSuc
     }
     if (!file) {
       setError('Please select a file');
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`File size must be under ${MAX_FILE_SIZE_MB} MB`);
+      return;
+    }
+    const ext = (file.name || '').split('.').pop()?.toLowerCase();
+    const allowed = ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+    if (ext && !allowed.includes(ext)) {
+      setError('Allowed types: PDF, Word, Excel, text, images (JPEG, PNG, GIF, WebP)');
       return;
     }
     setSubmitting(true);
@@ -96,7 +109,7 @@ export default function UploadDocumentModal({ caseId, cases = [], onClose, onSuc
             <label className="block text-sm font-medium text-gray-700 mb-1">File *</label>
             <input
               type="file"
-              accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,image/jpeg,image/png,image/gif,image/webp"
+              accept={ACCEPT_TYPES}
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
             />

@@ -19,7 +19,7 @@ export default function ProtectedRoute({ children, requireOrgAdmin = false }) {
   }
 
   if (requireOrgAdmin && user.role !== 'ORG_ADMIN') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/403" replace />;
   }
 
   return children;

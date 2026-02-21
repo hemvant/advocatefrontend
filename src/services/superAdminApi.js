@@ -20,6 +20,18 @@ export const assignOrganizationModules = (id, moduleIds) => api.put(`/super-admi
 
 export const getAllModules = () => api.get('/super-admin/modules');
 export const getSubscriptions = () => api.get('/super-admin/subscriptions');
+export const assignSubscription = (organizationId, data) => api.post(`/super-admin/organizations/${organizationId}/subscription`, data);
+
+export const getPackages = (params) => api.get('/super-admin/packages', { params });
+export const getPackage = (id) => api.get(`/super-admin/packages/${id}`);
+export const createPackage = (data) => api.post('/super-admin/packages', data);
+export const updatePackage = (id, data) => api.put(`/super-admin/packages/${id}`, data);
+export const deletePackage = (id) => api.delete(`/super-admin/packages/${id}`);
+
+export const getInvoices = (params) => api.get('/super-admin/invoices', { params });
+export const createInvoice = (data) => api.post('/super-admin/invoices', data);
+export const markInvoicePaid = (id, data = {}) => api.put(`/super-admin/invoices/${id}/mark-paid`, data);
+
 export const getPlatformAuditLogs = (params) => api.get('/super-admin/audit-logs', { params });
 export const resetOrgAdminPassword = (organizationId, newPassword) =>
   api.put(`/super-admin/organizations/${organizationId}/reset-admin-password`, { new_password: newPassword });

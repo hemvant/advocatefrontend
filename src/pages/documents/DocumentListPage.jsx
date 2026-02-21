@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import { listDocuments, searchDocuments, softDeleteDocument, downloadDocument } from '../../services/documentApi';
 import { listCases } from '../../services/caseApi';
 import UploadDocumentModal from '../../components/documents/UploadDocumentModal';
+import { useNotification } from '../../context/NotificationContext';
+import { getApiMessage } from '../../services/apiHelpers';
+import TableSkeleton from '../../components/ui/TableSkeleton';
+import EmptyState from '../../components/ui/EmptyState';
+import Button from '../../components/ui/Button';
 
 const DOC_TYPES = ['PETITION', 'EVIDENCE', 'AGREEMENT', 'NOTICE', 'ORDER', 'OTHER'];
 
@@ -26,6 +31,9 @@ export default function DocumentListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const { success, error: showError } = useNotification();
 
   const loadCases = () => {
     listCases({ limit: 500 })
@@ -52,7 +60,9 @@ export default function DocumentListPage() {
         setTotal(data.total ?? 0);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load documents');
+      const msg = getApiMessage(err, 'Failed to load documents');
+      setError(msg);
+      showError(msg);
     } finally {
       setLoading(false);
     }
@@ -72,13 +82,18 @@ export default function DocumentListPage() {
     setPage(1);
   };
 
-  const handleDelete = async (doc) => {
-    if (!window.confirm(`Delete "${doc.document_name}"?`)) return;
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await softDeleteDocument(doc.id);
+      await softDeleteDocument(deleteTarget.id);
+      success(`Document "${deleteTarget.document_name}" deleted.`);
+      setDeleteTarget(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      showError(getApiMessage(err, 'Delete failed'));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -91,13 +106,15 @@ export default function DocumentListPage() {
       a.download = doc.original_file_name || doc.document_name || 'document';
       a.click();
       window.URL.revokeObjectURL(url);
+      success('Document downloaded.');
     } catch (err) {
-      setError(err.response?.data?.message || 'Download failed');
+      showError(getApiMessage(err, 'Download failed'));
     }
   };
 
   const handleUploadDone = () => {
     setUploadOpen(false);
+    success('Document uploaded successfully.');
     load();
     loadCases();
   };
@@ -106,13 +123,7 @@ export default function DocumentListPage() {
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold text-primary">Document Management</h1>
-        <button
-          type="button"
-          onClick={() => setUploadOpen(true)}
-          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 focus:ring-2 focus:ring-accent"
-        >
-          Upload document
-        </button>
+        <Button onClick={() => setUploadOpen(true)}>Upload document</Button>
       </div>
 
       {error && <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">{error}</div>}
@@ -161,11 +172,14 @@ export default function DocumentListPage() {
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-accent" />
-          </div>
+          <TableSkeleton rows={8} cols={6} />
         ) : items.length === 0 ? (
-          <p className="p-6 text-gray-500 text-center">No documents. Upload one or open a case to add documents.</p>
+          <EmptyState
+            icon="📄"
+            title="No documents"
+            description="Upload a document or open a case to add documents."
+            action={<Button onClick={() => setUploadOpen(true)}>Upload document</Button>}
+          />
         ) : (
           <>
             <div className="table-wrap overflow-x-auto -mx-4 sm:mx-0">
@@ -226,7 +240,7 @@ export default function DocumentListPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <button type="button" onClick={() => handleDownload(doc)} className="text-primary hover:underline mr-3">Download</button>
-                          <button type="button" onClick={() => handleDelete(doc)} className="text-red-600 hover:underline">Delete</button>
+                          <button type="button" onClick={() => setDeleteTarget(doc)} className="text-red-600 hover:underline">Delete</button>
                         </td>
                       </tr>
                     );
@@ -268,6 +282,19 @@ export default function DocumentListPage() {
           onClose={() => setUploadOpen(false)}
           onSuccess={handleUploadDone}
         />
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !deleting && setDeleteTarget(null)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-primary mb-2">Delete document?</h2>
+            <p className="text-gray-600 text-sm mb-4">"{deleteTarget.document_name}" will be moved to trash. This action can be reversed by an admin.</p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</Button>
+              <Button variant="danger" loading={deleting} onClick={handleDeleteConfirm}>Delete</Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

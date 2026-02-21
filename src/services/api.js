@@ -12,6 +12,9 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       window.dispatchEvent(new CustomEvent('auth:logout'));
     }
+    if (err.code === 'ERR_NETWORK' && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('app:network-error'));
+    }
     return Promise.reject(err);
   }
 );

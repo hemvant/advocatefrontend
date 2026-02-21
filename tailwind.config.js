@@ -21,6 +21,13 @@ export default {
       },
       minWidth: {
         screen: ['100vw', '100dvw']
+      },
+      borderRadius: {
+        DEFAULT: '8px'
+      },
+      boxShadow: {
+        'soft': '0 2px 8px rgba(11, 31, 58, 0.06)',
+        'card': '0 1px 3px rgba(0,0,0,0.08)'
       }
     },
   },

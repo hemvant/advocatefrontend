@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getHearing, updateHearing, deleteHearing, addReminder, removeReminder } from '../../services/hearingApi';
+import { useNotification } from '../../context/NotificationContext';
+import { getApiMessage } from '../../services/apiHelpers';
+import Button from '../../components/ui/Button';
 
 const STATUS_COLOR = { UPCOMING: 'bg-amber-100 text-amber-800', COMPLETED: 'bg-green-100 text-green-800', ADJOURNED: 'bg-gray-100', CANCELLED: 'bg-red-100 text-red-800' };
 const STATUS_OPTIONS = ['UPCOMING', 'COMPLETED', 'ADJOURNED', 'CANCELLED'];
@@ -16,6 +19,9 @@ export default function HearingDetail() {
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ hearing_date: '', courtroom: '', hearing_type: 'REGULAR', status: 'UPCOMING', remarks: '' });
   const [saving, setSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const { success, error: showError } = useNotification();
 
   const load = () => {
     getHearing(id)
@@ -32,7 +38,7 @@ export default function HearingDetail() {
           });
         }
       })
-      .catch(() => setError('Hearing not found'));
+      .catch((err) => { setError(getApiMessage(err, 'Hearing not found')); showError(getApiMessage(err, 'Hearing not found')); });
   };
 
   useEffect(() => {
@@ -50,10 +56,13 @@ export default function HearingDetail() {
         status: editForm.status,
         remarks: editForm.remarks || null
       });
+      success('Hearing updated successfully.');
       setEditing(false);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      const msg = getApiMessage(err, 'Update failed');
+      setError(msg);
+      showError(msg);
     } finally {
       setSaving(false);
     }
@@ -64,29 +73,34 @@ export default function HearingDetail() {
     if (!reminderTime) return;
     try {
       await addReminder(id, { reminder_time: new Date(reminderTime).toISOString(), reminder_type: reminderType });
+      success('Reminder added.');
       setReminderTime('');
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add reminder');
+      showError(getApiMessage(err, 'Failed to add reminder'));
     }
   };
 
   const handleRemoveReminder = async (reminderId) => {
     try {
       await removeReminder(id, reminderId);
+      success('Reminder removed.');
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to remove');
+      showError(getApiMessage(err, 'Failed to remove'));
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm('Delete this hearing?')) return;
+  const handleDeleteConfirm = async () => {
+    setDeleting(true);
     try {
       await deleteHearing(id);
+      success('Hearing deleted.');
       navigate('/calendar');
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      showError(getApiMessage(err, 'Delete failed'));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -103,9 +117,9 @@ export default function HearingDetail() {
           <p className="text-gray-500 mt-1">{hearing.Case?.case_title} · {hearing.Case?.case_number}</p>
         </div>
         <div className="flex gap-2">
-          <button type="button" onClick={() => setEditing(!editing)} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Edit</button>
-          <Link to={`/cases/${hearing.case_id}`} className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5">View Case</Link>
-          <button type="button" onClick={handleDelete} className="px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50">Delete</button>
+          <Button type="button" onClick={() => setEditing(!editing)}>Edit</Button>
+          <Link to={`/cases/${hearing.case_id}`} className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 inline-flex items-center">View Case</Link>
+          <Button variant="danger" onClick={() => setDeleteConfirm(true)}>Delete</Button>
         </div>
       </div>
 
@@ -180,6 +194,19 @@ export default function HearingDetail() {
           <button type="submit" className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/90 text-sm">Add reminder</button>
         </form>
       </div>
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !deleting && setDeleteConfirm(false)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-primary mb-2">Delete hearing?</h2>
+            <p className="text-gray-600 text-sm mb-4">This hearing will be permanently removed.</p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" onClick={() => setDeleteConfirm(false)} disabled={deleting}>Cancel</Button>
+              <Button variant="danger" loading={deleting} onClick={handleDeleteConfirm}>Delete</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

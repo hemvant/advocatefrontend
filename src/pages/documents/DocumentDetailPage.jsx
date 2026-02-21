@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { useNotification } from '../../context/NotificationContext';
+import { getApiMessage } from '../../services/apiHelpers';
 import {
   getDocument,
   downloadDocument,
@@ -32,6 +34,7 @@ export default function DocumentDetailPage() {
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState(null);
   const [restoring, setRestoring] = useState(false);
+  const { success, error: showError } = useNotification();
 
   const currentVer = doc?.current_version ?? doc?.version_number ?? 0;
 
@@ -69,8 +72,11 @@ export default function DocumentDetailPage() {
       a.download = doc?.original_file_name || doc?.document_name || 'document';
       a.click();
       window.URL.revokeObjectURL(url);
+      success('Document downloaded.');
     } catch (err) {
-      setError(err.response?.data?.message || 'Download failed');
+      const msg = getApiMessage(err, 'Download failed');
+      setError(msg);
+      showError(msg);
     }
   };
 
@@ -84,7 +90,7 @@ export default function DocumentDetailPage() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.response?.data?.message || 'Download failed');
+      showError(getApiMessage(err, 'Download failed'));
     }
   };
 
@@ -93,11 +99,12 @@ export default function DocumentDetailPage() {
     setRestoring(true);
     try {
       await restoreDocumentVersion(id, restoreTarget.id);
+      success('Version restored successfully.');
       setRestoreTarget(null);
       load();
       if (tab === 'versions') loadVersions();
     } catch (err) {
-      setError(err.response?.data?.message || 'Restore failed');
+      showError(getApiMessage(err, 'Restore failed'));
     } finally {
       setRestoring(false);
     }
@@ -111,12 +118,13 @@ export default function DocumentDetailPage() {
       const formData = new FormData();
       formData.append('file', versionFile);
       await uploadNewVersion(id, formData);
+      success('New version uploaded successfully.');
       setVersionOpen(false);
       setVersionFile(null);
       load();
       if (tab === 'versions') loadVersions();
     } catch (err) {
-      setError(err.response?.data?.message || 'Upload failed');
+      showError(getApiMessage(err, 'Upload failed'));
     } finally {
       setUploading(false);
     }

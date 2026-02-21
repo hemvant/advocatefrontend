@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getOrganizationDetail, resetOrgAdminPassword } from '../../services/superAdminApi';
+import { getOrganizationDetail, resetOrgAdminPassword, getPackages, assignSubscription } from '../../services/superAdminApi';
 import PasswordInput from '../../components/PasswordInput';
 
 export default function OrganizationDetailPage() {
@@ -12,6 +12,11 @@ export default function OrganizationDetailPage() {
   const [resetPasswordForm, setResetPasswordForm] = useState({ new_password: '', confirm: '' });
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
   const [resetPasswordError, setResetPasswordError] = useState('');
+  const [assignSubOpen, setAssignSubOpen] = useState(false);
+  const [packages, setPackages] = useState([]);
+  const [assignForm, setAssignForm] = useState({ package_id: '', billing_cycle: 'MONTHLY' });
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [assignError, setAssignError] = useState('');
 
   useEffect(() => {
     getOrganizationDetail(id)
@@ -49,6 +54,30 @@ export default function OrganizationDetailPage() {
   const org = data.organization || {};
   const audit = data.recent_audit_logs || [];
   const orgAdmin = (data.organization?.OrganizationUsers || []).find((u) => u.role === 'ORG_ADMIN');
+  const activeSub = data.active_subscription;
+
+  const openAssignSub = () => {
+    setAssignError('');
+    setAssignForm({ package_id: '', billing_cycle: 'MONTHLY' });
+    getPackages().then((r) => setPackages(r.data.data || [])).catch(() => setPackages([]));
+    setAssignSubOpen(true);
+  };
+
+  const handleAssignSub = async (e) => {
+    e.preventDefault();
+    if (!assignForm.package_id) return;
+    setAssignLoading(true);
+    setAssignError('');
+    try {
+      await assignSubscription(id, { package_id: parseInt(assignForm.package_id, 10), billing_cycle: assignForm.billing_cycle });
+      setAssignSubOpen(false);
+      getOrganizationDetail(id).then((r) => setData(r.data.data)).catch(() => {});
+    } catch (err) {
+      setAssignError(err.response?.data?.message || 'Assign failed');
+    } finally {
+      setAssignLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -64,6 +93,9 @@ export default function OrganizationDetailPage() {
         >
           Reset org admin password
         </button>
+        <button type="button" onClick={openAssignSub} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+          Assign package
+        </button>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-xl border bg-white p-5"><p className="text-xs text-gray-500">Clients</p><p className="text-xl font-bold text-primary">{data.client_count}</p></div>
@@ -73,7 +105,8 @@ export default function OrganizationDetailPage() {
       </div>
       <div className="rounded-xl border bg-white p-5">
         <h2 className="text-lg font-semibold text-primary mb-3">Info</h2>
-        <p>Email: {org.email || '—'} | Plan: {org.subscription_plan || '—'} | Status: {org.is_active ? 'Active' : 'Suspended'}</p>
+        <p>Email: {org.email || '—'} | Status: {org.is_active ? 'Active' : 'Suspended'}</p>
+        <p>Plan: {activeSub ? `${activeSub.plan} (${activeSub.billing_cycle})` : (org.subscription_plan || '—')} · Expires: {activeSub?.expires_at ? new Date(activeSub.expires_at).toLocaleDateString() : '—'}</p>
         <p>Modules: {(data.module_usage || []).join(', ') || '—'}</p>
         {orgAdmin && (
           <p className="mt-2 text-sm text-gray-600">Org admin: {orgAdmin.name} ({orgAdmin.email}) — only Super Admin can reset this password.</p>
@@ -92,6 +125,37 @@ export default function OrganizationDetailPage() {
         </ul>
         {audit.length === 0 && <p className="text-gray-500">No recent activity.</p>}
       </div>
+
+      {assignSubOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-primary mb-4">Assign package</h2>
+            {assignError && <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">{assignError}</div>}
+            <form onSubmit={handleAssignSub} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Package *</label>
+                <select value={assignForm.package_id} onChange={(e) => setAssignForm((f) => ({ ...f, package_id: e.target.value }))} className="w-full px-3 py-2 border rounded-lg" required>
+                  <option value="">Select package</option>
+                  {packages.filter((p) => p.is_active !== false).map((p) => (
+                    <option key={p.id} value={p.id}>{p.name} — ₹{p.price_monthly}/mo, {p.employee_limit} employees</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Billing cycle</label>
+                <select value={assignForm.billing_cycle} onChange={(e) => setAssignForm((f) => ({ ...f, billing_cycle: e.target.value }))} className="w-full px-3 py-2 border rounded-lg">
+                  <option value="MONTHLY">Monthly</option>
+                  <option value="ANNUAL">Annual</option>
+                </select>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="submit" disabled={assignLoading || !assignForm.package_id} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50">{assignLoading ? 'Assigning...' : 'Assign'}</button>
+                <button type="button" onClick={() => setAssignSubOpen(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {resetPasswordOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

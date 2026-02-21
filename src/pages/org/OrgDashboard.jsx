@@ -4,29 +4,40 @@ import { useOrgAuth } from '../../context/OrgAuthContext';
 import { getDashboardHearings } from '../../services/hearingApi';
 import { getTaskDashboard } from '../../services/taskApi';
 import { getDocumentDashboard } from '../../services/documentApi';
+import PageLoader from '../../components/ui/PageLoader';
+import EmptyState from '../../components/ui/EmptyState';
 
 export default function OrgDashboard() {
   const { user, hasModule } = useOrgAuth();
   const [hearings, setHearings] = useState({ todays: [], upcoming: [], overdue: [] });
   const [tasks, setTasks] = useState({ myTasks: [], overdue: [], upcoming: [] });
   const [docStats, setDocStats] = useState({ total: 0, processed: 0, pending: 0, recent: [] });
+  const [loadingHearings, setLoadingHearings] = useState(false);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+  const [loadingDocs, setLoadingDocs] = useState(false);
 
   useEffect(() => {
     if (hasModule('Case Management')) {
+      setLoadingHearings(true);
+      setLoadingTasks(true);
       getDashboardHearings()
         .then(({ data }) => setHearings(data.data || { todays: [], upcoming: [], overdue: [] }))
-        .catch(() => {});
+        .catch(() => setHearings({ todays: [], upcoming: [], overdue: [] }))
+        .finally(() => setLoadingHearings(false));
       getTaskDashboard()
         .then(({ data }) => setTasks(data.data || { myTasks: [], overdue: [], upcoming: [] }))
-        .catch(() => {});
+        .catch(() => setTasks({ myTasks: [], overdue: [], upcoming: [] }))
+        .finally(() => setLoadingTasks(false));
     }
   }, [hasModule]);
 
   useEffect(() => {
     if (hasModule('Document Management')) {
+      setLoadingDocs(true);
       getDocumentDashboard()
         .then(({ data }) => setDocStats(data.data || { total: 0, processed: 0, pending: 0, recent: [] }))
-        .catch(() => {});
+        .catch(() => setDocStats({ total: 0, processed: 0, pending: 0, recent: [] }))
+        .finally(() => setLoadingDocs(false));
     }
   }, [hasModule]);
 
@@ -39,6 +50,14 @@ export default function OrgDashboard() {
       <p className="text-gray-600 mb-6">
         Welcome, {user?.name}. {user?.organization?.name && `(${user.organization.name})`}
       </p>
+
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Link to="/documents" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium">Documents</Link>
+        <Link to="/calendar" className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 text-sm font-medium">Calendar</Link>
+        <Link to="/cases" className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 text-sm font-medium">Cases</Link>
+        <Link to="/clients" className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 text-sm font-medium">Clients</Link>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-primary mb-2">Your organization</h2>
@@ -52,7 +71,11 @@ export default function OrgDashboard() {
 
       {showDocuments && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+          {loadingDocs ? (
+            <div className="col-span-4 flex justify-center py-8"><div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-accent" /></div>
+          ) : (
+            <>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-4">
             <h3 className="text-sm font-medium text-gray-500 uppercase">Total Documents</h3>
             <p className="text-2xl font-bold text-primary mt-1">{docStats.total}</p>
           </div>
@@ -64,10 +87,12 @@ export default function OrgDashboard() {
             <h3 className="text-sm font-medium text-gray-500 uppercase">Pending OCR</h3>
             <p className="text-2xl font-bold text-amber-600 mt-1">{docStats.pending}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-4">
             <h3 className="text-sm font-medium text-gray-500 uppercase">Recent Uploads</h3>
             <p className="text-2xl font-bold text-primary mt-1">{docStats.recent?.length ?? 0}</p>
           </div>
+          </>
+          )}
         </div>
       )}
 
@@ -95,7 +120,11 @@ export default function OrgDashboard() {
       {showHearings && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+            {loadingTasks ? (
+              <div className="col-span-3"><PageLoader /></div>
+            ) : (
+            <>
+            <div className="bg-white border border-gray-200 rounded-lg shadow-soft overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200 bg-primary/5 flex justify-between items-center">
                 <h2 className="text-lg font-semibold text-primary">My tasks</h2>
                 <Link to="/tasks" className="text-sm text-accent hover:underline">View all</Link>
@@ -138,12 +167,17 @@ export default function OrgDashboard() {
                 ))}
               </ul>
             </div>
+            </>
+            )}
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-soft overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 bg-amber-50 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-primary">Today&apos;s Hearings</h2>
               <Link to="/calendar" className="text-sm text-accent hover:underline">View calendar</Link>
             </div>
+            {loadingHearings ? (
+              <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-accent" /></div>
+            ) : (
             <ul className="divide-y divide-gray-200">
               {hearings.todays?.length === 0 && <li className="px-6 py-4 text-gray-500 text-sm">No hearings today.</li>}
               {hearings.todays?.slice(0, 5).map((h) => (
@@ -153,6 +187,7 @@ export default function OrgDashboard() {
                 </li>
               ))}
             </ul>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">

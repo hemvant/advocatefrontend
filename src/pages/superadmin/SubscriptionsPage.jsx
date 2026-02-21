@@ -43,12 +43,13 @@ export default function SubscriptionsPage() {
       <div className="rounded-xl border bg-white shadow overflow-hidden">
         <h2 className="text-lg font-semibold text-primary p-4 border-b">Expiring Soon</h2>
         <table className="min-w-full">
-          <thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">Organization</th><th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">Plan</th><th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">Expires</th></tr></thead>
+          <thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">Organization</th><th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">Plan</th><th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">Billing</th><th className="px-6 py-3 text-left text-xs text-gray-500 uppercase">Expires</th></tr></thead>
           <tbody className="divide-y">
             {expiring.map((s) => (
               <tr key={s.id}>
                 <td className="px-6 py-4 text-sm">{s.Organization?.name || '—'}</td>
                 <td className="px-6 py-4 text-sm">{s.plan}</td>
+                <td className="px-6 py-4 text-sm">{s.billing_cycle || '—'}</td>
                 <td className="px-6 py-4 text-sm">{s.expires_at ? new Date(s.expires_at).toLocaleDateString() : '—'}</td>
               </tr>
             ))}

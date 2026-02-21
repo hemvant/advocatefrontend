@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { orgLogin } from '../../services/orgApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { useNotification } from '../../context/NotificationContext';
+import { getApiMessage } from '../../services/apiHelpers';
 import PasswordInput from '../../components/PasswordInput';
 
 export default function OrgLogin() {
@@ -10,6 +12,7 @@ export default function OrgLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { loginSuccess } = useOrgAuth();
+  const { success, error: showError } = useNotification();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
@@ -21,9 +24,12 @@ export default function OrgLogin() {
     try {
       const { data } = await orgLogin({ email, password });
       loginSuccess(data.user);
+      success('Signed in successfully.');
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      const msg = getApiMessage(err, 'Login failed');
+      setError(msg);
+      showError(msg);
     } finally {
       setLoading(false);
     }

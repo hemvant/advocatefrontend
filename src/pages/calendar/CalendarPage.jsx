@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getCalendarView, createHearing } from '../../services/hearingApi';
 import { listCases } from '../../services/caseApi';
+import { useNotification } from '../../context/NotificationContext';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const STATUS_OPTIONS = ['UPCOMING', 'COMPLETED', 'ADJOURNED', 'CANCELLED'];
 const STATUS_COLOR = { UPCOMING: 'bg-amber-100 text-amber-800', COMPLETED: 'bg-green-100 text-green-800', ADJOURNED: 'bg-gray-100 text-gray-800', CANCELLED: 'bg-red-100 text-red-800' };
@@ -17,6 +19,7 @@ export default function CalendarPage() {
   const [cases, setCases] = useState([]);
   const [addForm, setAddForm] = useState({ case_id: '', hearing_date: '', courtroom: '', hearing_type: 'REGULAR', status: 'UPCOMING', remarks: '' });
   const [submitting, setSubmitting] = useState(false);
+  const { success, error: showError } = useNotification();
 
   const load = async () => {
     setLoading(true);
@@ -28,9 +31,10 @@ export default function CalendarPage() {
       const { data } = await getCalendarView(params);
       setHearings(data.data || []);
       setByDate(data.byDate || {});
-    } catch {
+    } catch (err) {
       setHearings([]);
       setByDate({});
+      showError(getApiMessage(err, 'Failed to load calendar'));
     } finally {
       setLoading(false);
     }
@@ -59,8 +63,11 @@ export default function CalendarPage() {
         status: addForm.status,
         remarks: addForm.remarks || null
       });
+      success('Hearing created successfully.');
       setAddModal(false);
       load();
+    } catch (err) {
+      showError(getApiMessage(err, 'Failed to create hearing'));
     } finally {
       setSubmitting(false);
     }

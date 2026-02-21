@@ -1,18 +1,19 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { lazy, Suspense, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { SuperAdminAuthProvider } from './context/SuperAdminAuthContext';
 import { OrgAuthProvider } from './context/OrgAuthContext';
+import { NotificationProvider } from './context/NotificationContext';
+import { ErrorBoundaryClass } from './components/ErrorBoundary';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
 import OrgLayout from './layouts/OrgLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import SuperAdminProtectedRoute from './components/SuperAdminProtectedRoute';
+import PageLoader from './components/ui/PageLoader';
+import NotFoundPage from './pages/errors/NotFoundPage';
+import ForbiddenPage from './pages/errors/ForbiddenPage';
+import ServerErrorPage from './pages/errors/ServerErrorPage';
+import NetworkErrorPage from './pages/errors/NetworkErrorPage';
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin';
-import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
-import SuperAdminOrganizationsPage from './pages/superadmin/SuperAdminOrganizationsPage';
-import OrganizationDetailPage from './pages/superadmin/OrganizationDetailPage';
-import SubscriptionsPage from './pages/superadmin/SubscriptionsPage';
-import PlatformAuditLogsPage from './pages/superadmin/PlatformAuditLogsPage';
-import SystemHealthPage from './pages/superadmin/SystemHealthPage';
 import OrgLogin from './pages/org/OrgLogin';
 import OrgDashboard from './pages/org/OrgDashboard';
 import OrgEmployees from './pages/org/OrgEmployees';
@@ -27,11 +28,9 @@ import CaseProfile from './pages/cases/CaseProfile';
 import CaseEdit from './pages/cases/CaseEdit';
 import CalendarPage from './pages/calendar/CalendarPage';
 import HearingDetail from './pages/calendar/HearingDetail';
-import Placeholder from './pages/Placeholder';
-import AnalyticsPage from './pages/reports/AnalyticsPage';
-import CaseDocumentsPage from './pages/documents/CaseDocumentsPage';
 import DocumentListPage from './pages/documents/DocumentListPage';
 import DocumentDetailPage from './pages/documents/DocumentDetailPage';
+import CaseDocumentsPage from './pages/documents/CaseDocumentsPage';
 import CourtList from './pages/courts/CourtList';
 import CourtCreate from './pages/courts/CourtCreate';
 import CourtDetail from './pages/courts/CourtDetail';
@@ -41,13 +40,41 @@ import CourtroomList from './pages/courtrooms/CourtroomList';
 import AuditLogsPage from './pages/audit/AuditLogsPage';
 import TasksPage from './pages/tasks/TasksPage';
 import CaseTasksPage from './pages/tasks/CaseTasksPage';
+import BillingPage from './pages/billing/BillingPage';
+import AnalyticsPage from './pages/reports/AnalyticsPage';
+
+const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'));
+const SuperAdminOrganizationsPage = lazy(() => import('./pages/superadmin/SuperAdminOrganizationsPage'));
+const OrganizationDetailPage = lazy(() => import('./pages/superadmin/OrganizationDetailPage'));
+const SubscriptionsPage = lazy(() => import('./pages/superadmin/SubscriptionsPage'));
+const PlatformAuditLogsPage = lazy(() => import('./pages/superadmin/PlatformAuditLogsPage'));
+const SystemHealthPage = lazy(() => import('./pages/superadmin/SystemHealthPage'));
+const PackagesPage = lazy(() => import('./pages/superadmin/PackagesPage'));
+const InvoicesPage = lazy(() => import('./pages/superadmin/InvoicesPage'));
+
+function LazyRoute({ children }) {
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+}
 
 export default function App() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const h = () => navigate('/network-error', { replace: true });
+    window.addEventListener('app:network-error', h);
+    return () => window.removeEventListener('app:network-error', h);
+  }, [navigate]);
+
   return (
-    <SuperAdminAuthProvider>
-      <OrgAuthProvider>
-        <Routes>
-          <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+    <ErrorBoundaryClass>
+      <SuperAdminAuthProvider>
+        <OrgAuthProvider>
+          <NotificationProvider>
+            <Routes>
+              <Route path="/404" element={<NotFoundPage />} />
+              <Route path="/403" element={<ForbiddenPage />} />
+              <Route path="/500" element={<ServerErrorPage />} />
+              <Route path="/network-error" element={<NetworkErrorPage />} />
+              <Route path="/super-admin/login" element={<SuperAdminLogin />} />
           <Route
             path="/super-admin"
             element={
@@ -57,12 +84,14 @@ export default function App() {
             }
           >
             <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
-            <Route path="dashboard" element={<SuperAdminDashboard />} />
-            <Route path="organizations" element={<SuperAdminOrganizationsPage />} />
-            <Route path="organizations/:id" element={<OrganizationDetailPage />} />
-            <Route path="subscriptions" element={<SubscriptionsPage />} />
-            <Route path="audit-logs" element={<PlatformAuditLogsPage />} />
-            <Route path="system-health" element={<SystemHealthPage />} />
+            <Route path="dashboard" element={<LazyRoute><SuperAdminDashboard /></LazyRoute>} />
+            <Route path="organizations" element={<LazyRoute><SuperAdminOrganizationsPage /></LazyRoute>} />
+            <Route path="organizations/:id" element={<LazyRoute><OrganizationDetailPage /></LazyRoute>} />
+            <Route path="subscriptions" element={<LazyRoute><SubscriptionsPage /></LazyRoute>} />
+            <Route path="packages" element={<LazyRoute><PackagesPage /></LazyRoute>} />
+            <Route path="invoices" element={<LazyRoute><InvoicesPage /></LazyRoute>} />
+            <Route path="audit-logs" element={<LazyRoute><PlatformAuditLogsPage /></LazyRoute>} />
+            <Route path="system-health" element={<LazyRoute><SystemHealthPage /></LazyRoute>} />
           </Route>
 
           <Route path="/login" element={<OrgLogin />} />
@@ -98,15 +127,17 @@ export default function App() {
             <Route path="audit-logs" element={<AuditLogsPage />} />
             <Route path="documents" element={<DocumentListPage />} />
             <Route path="documents/:id" element={<DocumentDetailPage />} />
-            <Route path="billing" element={<Placeholder />} />
+            <Route path="billing" element={<BillingPage />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="hearings/:id" element={<HearingDetail />} />
             <Route path="reports" element={<AnalyticsPage />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </OrgAuthProvider>
-    </SuperAdminAuthProvider>
+          <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </NotificationProvider>
+        </OrgAuthProvider>
+      </SuperAdminAuthProvider>
+    </ErrorBoundaryClass>
   );
 }
