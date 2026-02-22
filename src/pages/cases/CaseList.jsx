@@ -57,6 +57,18 @@ export default function CaseList() {
 
   return (
     <div>
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4 text-sm text-primary/90">
+        <p className="font-medium mb-1">Cases depend on Master Data like Clients, Courts, and Judges.</p>
+        <p className="mb-2">Please ensure they are created before managing cases.</p>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/clients" className="text-accent font-medium hover:underline">Go to Clients</Link>
+          <span className="text-gray-400">·</span>
+          <Link to="/courts" className="text-accent font-medium hover:underline">Go to Courts</Link>
+          <span className="text-gray-400">·</span>
+          <Link to="/judges" className="text-accent font-medium hover:underline">Go to Judges</Link>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold text-primary">Cases</h1>
         <Link

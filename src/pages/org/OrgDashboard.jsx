@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { getSetupStatus } from '../../services/orgApi';
 import { getDashboardHearings } from '../../services/hearingApi';
 import { getTaskDashboard } from '../../services/taskApi';
 import { getDocumentDashboard } from '../../services/documentApi';
@@ -9,12 +10,20 @@ import EmptyState from '../../components/ui/EmptyState';
 
 export default function OrgDashboard() {
   const { user, hasModule, subscriptionInfo } = useOrgAuth();
+  const [setupStatus, setSetupStatus] = useState(null);
   const [hearings, setHearings] = useState({ todays: [], upcoming: [], overdue: [] });
   const [tasks, setTasks] = useState({ myTasks: [], overdue: [], upcoming: [] });
   const [docStats, setDocStats] = useState({ total: 0, processed: 0, pending: 0, recent: [] });
   const [loadingHearings, setLoadingHearings] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  useEffect(() => {
+    getSetupStatus()
+      .then(({ data }) => setSetupStatus(data?.data || data))
+      .catch(() => setSetupStatus(null));
+  }, []);
 
   useEffect(() => {
     if (hasModule('Case Management')) {
@@ -50,6 +59,86 @@ export default function OrgDashboard() {
       <p className="text-gray-600 mb-6">
         Welcome, {user?.name}. {user?.organization?.name && `(${user.organization.name})`}
       </p>
+
+      {hasModule('Case Management') && setupStatus && !setupStatus.is_initial_setup_complete && (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-4 mb-6">
+          <div className="flex justify-between items-start gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-primary mb-3">Dashboard Setup Checklist</h2>
+              <p className="text-sm text-gray-600 mb-3">Complete these steps to get started with case management.</p>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2">
+                  {setupStatus.has_clients ? <span className="text-green-600">✓</span> : <span className="text-gray-400">☐</span>}
+                  <span>Add at least 1 Client</span>
+                  {!setupStatus.has_clients && <Link to="/clients/create" className="text-accent text-sm font-medium hover:underline ml-1">Add now</Link>}
+                </li>
+                <li className="flex items-center gap-2">
+                  {setupStatus.has_courts ? <span className="text-green-600">✓</span> : <span className="text-gray-400">☐</span>}
+                  <span>Add at least 1 Court</span>
+                  {!setupStatus.has_courts && <Link to="/courts/create" className="text-accent text-sm font-medium hover:underline ml-1">Add now</Link>}
+                </li>
+                <li className="flex items-center gap-2">
+                  {setupStatus.has_judges ? <span className="text-green-600">✓</span> : <span className="text-gray-400">☐</span>}
+                  <span>Add at least 1 Judge</span>
+                  {!setupStatus.has_judges && <Link to="/judges" className="text-accent text-sm font-medium hover:underline ml-1">Add now</Link>}
+                </li>
+                <li className="flex items-center gap-2">
+                  {setupStatus.has_cases ? <span className="text-green-600">✓</span> : <span className="text-gray-400">☐</span>}
+                  <span>Add at least 1 Case</span>
+                  {!setupStatus.has_cases && <Link to="/cases/create" className="text-accent text-sm font-medium hover:underline ml-1">Add now</Link>}
+                </li>
+              </ul>
+            </div>
+            <button
+              type="button"
+              onClick={() => setWizardOpen(true)}
+              className="px-3 py-1.5 border border-primary text-primary rounded-lg hover:bg-primary/5 text-sm font-medium shrink-0"
+            >
+              Setup Wizard
+            </button>
+          </div>
+        </div>
+      )}
+
+      {wizardOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setWizardOpen(false)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-primary mb-2">Initial Setup Wizard</h3>
+            <p className="text-sm text-gray-600 mb-4">Follow these steps to set up case management. Client and Court are required before creating a case.</p>
+            <div className="mb-4 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all"
+                style={{ width: `${[setupStatus?.has_clients, setupStatus?.has_courts, setupStatus?.has_judges, setupStatus?.has_cases].filter(Boolean).length * 25}%` }}
+              />
+            </div>
+            <ol className="space-y-3 text-sm">
+              <li className="flex items-center gap-2">
+                <span className="font-medium">1.</span>
+                <span>Add Client</span>
+                <Link to="/clients/create" className="ml-auto px-2 py-1 bg-primary text-white rounded text-xs hover:bg-primary/90" onClick={() => setWizardOpen(false)}>Go</Link>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="font-medium">2.</span>
+                <span>Add Court</span>
+                <Link to="/courts/create" className="ml-auto px-2 py-1 bg-primary text-white rounded text-xs hover:bg-primary/90" onClick={() => setWizardOpen(false)}>Go</Link>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="font-medium">3.</span>
+                <span>Add Judge (optional)</span>
+                <Link to="/judges" className="ml-auto px-2 py-1 border border-gray-300 rounded text-xs hover:bg-gray-50" onClick={() => setWizardOpen(false)}>Go</Link>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="font-medium">4.</span>
+                <span>Create first case</span>
+                <Link to="/cases/create" className="ml-auto px-2 py-1 bg-primary text-white rounded text-xs hover:bg-primary/90" onClick={() => setWizardOpen(false)}>Go</Link>
+              </li>
+            </ol>
+            <button type="button" onClick={() => setWizardOpen(false)} className="mt-4 w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {subscriptionInfo && (
         <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-4 mb-6">

@@ -4,6 +4,7 @@ export const orgLogin = (data) => api.post('/org/login', data);
 export const orgLogout = () => api.post('/org/logout');
 export const orgGetMe = () => api.get('/org/me');
 export const getMyModules = () => api.get('/org/my-modules');
+export const getSetupStatus = () => api.get('/org/setup-status');
 
 export const getEmployees = () => api.get('/org/employees');
 export const getEmployee = (id) => api.get(`/org/employees/${id}`);

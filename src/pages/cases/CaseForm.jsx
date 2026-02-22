@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { listCaseClients } from '../../services/caseApi';
 import { getEmployees } from '../../services/orgApi';
 import {
@@ -32,7 +33,7 @@ const defaultCase = {
   assigned_to: ''
 };
 
-export default function CaseForm({ caseRecord, onSubmit, loading }) {
+export default function CaseForm({ caseRecord, onSubmit, loading, onClientsChange, onCourtsChange }) {
   const { isOrgAdmin } = useOrgAuth();
   const [form, setForm] = useState(caseRecord ? {
     ...defaultCase,
@@ -113,16 +114,22 @@ export default function CaseForm({ caseRecord, onSubmit, loading }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
-          <select
-            value={form.client_id}
-            onChange={(e) => update('client_id', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
-            required
-            disabled={!!caseRecord}
-          >
-            <option value="">Select client</option>
-            {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          {clients.length === 0 ? (
+            <div className="p-3 border border-amber-200 bg-amber-50 rounded-lg text-sm">
+              <p className="text-amber-900">No clients found. <Link to="/clients/create" className="font-medium text-accent hover:underline">Add Client</Link></p>
+            </div>
+          ) : (
+            <select
+              value={form.client_id}
+              onChange={(e) => update('client_id', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
+              required
+              disabled={!!caseRecord}
+            >
+              <option value="">Select client</option>
+              {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Case number</label>
@@ -146,14 +153,20 @@ export default function CaseForm({ caseRecord, onSubmit, loading }) {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Court</label>
-          <select
-            value={form.court_id}
-            onChange={(e) => update('court_id', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
-          >
-            <option value="">Select court</option>
-            {courts.map((c) => <option key={c.id} value={c.id}>{c.name} {c.CourtType ? `(${c.CourtType.name})` : ''}</option>)}
-          </select>
+          {courts.length === 0 ? (
+            <div className="p-3 border border-amber-200 bg-amber-50 rounded-lg text-sm">
+              <p className="text-amber-900">No courts found. <Link to="/courts/create" className="font-medium text-accent hover:underline">Add Court</Link></p>
+            </div>
+          ) : (
+            <select
+              value={form.court_id}
+              onChange={(e) => update('court_id', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
+            >
+              <option value="">Select court</option>
+              {courts.map((c) => <option key={c.id} value={c.id}>{c.name} {c.CourtType ? `(${c.CourtType.name})` : ''}</option>)}
+            </select>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Bench</label>
@@ -169,6 +182,9 @@ export default function CaseForm({ caseRecord, onSubmit, loading }) {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Judge</label>
+          {form.court_id && judges.length === 0 && (
+            <p className="text-amber-700 text-sm mb-1">No judges available. You can add one later.</p>
+          )}
           <select
             value={form.judge_id}
             onChange={(e) => update('judge_id', e.target.value)}
