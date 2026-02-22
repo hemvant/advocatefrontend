@@ -35,7 +35,7 @@ export default function OrgEmployees() {
   };
 
   const openEdit = (emp) => {
-    setModal({ type: 'edit', id: emp.id, form: { name: emp.name, is_active: emp.is_active, is_approved: emp.is_approved, role: emp.role } });
+    setModal({ type: 'edit', id: emp.id, form: { name: emp.name, is_active: emp.is_active, is_approved: emp.is_approved, role: emp.role, status: emp.status || (emp.is_active ? 'active' : 'inactive') } });
   };
 
   const openModules = async (emp) => {
@@ -61,7 +61,7 @@ export default function OrgEmployees() {
   const handleEdit = async (e) => {
     e.preventDefault();
     try {
-      await updateEmployee(modal.id, modal.form);
+      await updateEmployee(modal.id, { name: modal.form.name, role: modal.form.role, status: modal.form.status, is_approved: modal.form.is_approved });
       setModal(null);
       load();
     } catch (err) {
@@ -153,8 +153,8 @@ export default function OrgEmployees() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{emp.email}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{emp.role}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs rounded ${emp.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {emp.is_active ? 'Active' : 'Inactive'}
+                  <span className={`px-2 py-1 text-xs rounded ${emp.status === 'left' ? 'bg-gray-200 text-gray-800' : emp.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {emp.status === 'left' ? 'Left' : emp.is_active ? 'Active' : 'Inactive'}
                   </span>
                   {!emp.is_approved && <span className="ml-1 px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800">Pending</span>}
                 </td>
@@ -208,7 +208,15 @@ export default function OrgEmployees() {
                 <option value="EMPLOYEE">EMPLOYEE</option>
                 <option value="ORG_ADMIN">ORG_ADMIN</option>
               </select>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={modal.form.is_active} onChange={(e) => setModal({ ...modal, form: { ...modal.form, is_active: e.target.checked } })} /> Active</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select value={modal.form.status} onChange={(e) => setModal({ ...modal, form: { ...modal.form, status: e.target.value, is_active: e.target.value === 'active' } })} className="w-full px-4 py-2 border rounded-lg">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="left">Left organization</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Use &quot;Left organization&quot; when the employee has left; case history is preserved.</p>
+              </div>
               <label className="flex items-center gap-2"><input type="checkbox" checked={modal.form.is_approved} onChange={(e) => setModal({ ...modal, form: { ...modal.form, is_approved: e.target.checked } })} /> Approved</label>
               <div className="flex gap-2 pt-2">
                 <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Save</button>

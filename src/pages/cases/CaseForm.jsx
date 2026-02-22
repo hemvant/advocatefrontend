@@ -12,6 +12,7 @@ import { useOrgAuth } from '../../context/OrgAuthContext';
 const CASE_TYPES = ['CIVIL', 'CRIMINAL', 'CORPORATE', 'TAX', 'FAMILY', 'OTHER'];
 const STATUSES = ['DRAFT', 'FILED', 'HEARING', 'ARGUMENT', 'JUDGMENT', 'CLOSED'];
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH'];
+const LIFECYCLE_STATUSES = ['Active', 'Closed', 'On_Hold', 'Appeal'];
 
 const defaultCase = {
   client_id: '',
@@ -24,6 +25,7 @@ const defaultCase = {
   case_type: 'OTHER',
   status: 'DRAFT',
   priority: 'MEDIUM',
+  case_lifecycle_status: 'Active',
   filing_date: '',
   next_hearing_date: '',
   description: '',
@@ -44,6 +46,7 @@ export default function CaseForm({ caseRecord, onSubmit, loading }) {
     case_type: caseRecord.case_type,
     status: caseRecord.status,
     priority: caseRecord.priority,
+    case_lifecycle_status: caseRecord.case_lifecycle_status || 'Active',
     filing_date: caseRecord.filing_date || '',
     next_hearing_date: caseRecord.next_hearing_date || '',
     description: caseRecord.description || '',
@@ -101,6 +104,7 @@ export default function CaseForm({ caseRecord, onSubmit, loading }) {
       description: form.description || null,
       assigned_to: form.assigned_to ? parseInt(form.assigned_to, 10) : null
     };
+    if (caseRecord && form.case_lifecycle_status) payload.case_lifecycle_status = form.case_lifecycle_status;
     onSubmit(payload);
   };
 
@@ -226,7 +230,21 @@ export default function CaseForm({ caseRecord, onSubmit, loading }) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
             >
               <option value="">—</option>
-              {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+              {employees.filter((emp) => emp.status === 'active' || emp.status === undefined).map((emp) => (
+                <option key={emp.id} value={emp.id}>{emp.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {caseRecord && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Case lifecycle</label>
+            <select
+              value={form.case_lifecycle_status}
+              onChange={(e) => update('case_lifecycle_status', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
+            >
+              {LIFECYCLE_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
         )}
