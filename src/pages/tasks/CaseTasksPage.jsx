@@ -5,7 +5,7 @@ import { getCase } from '../../services/caseApi';
 import { getEmployees } from '../../services/orgApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
 
-const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH'];
+const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
 export default function CaseTasksPage() {
   const { id: caseId } = useParams();
@@ -185,7 +185,7 @@ export default function CaseTasksPage() {
                       <p className="font-medium">{task.title}</p>
                       {task.description && <p className="text-sm text-gray-500">{task.description}</p>}
                       <div className="flex flex-wrap gap-2 mt-1">
-                        <span className="px-2 py-0.5 text-xs rounded bg-gray-100">{task.priority}</span>
+                        <span className={`px-2 py-0.5 text-xs rounded ${task.priority === 'URGENT' ? 'bg-red-100 text-red-800' : task.priority === 'HIGH' ? 'bg-orange-100' : 'bg-gray-100'}`}>{task.priority}</span>
                         <span className={`px-2 py-0.5 text-xs rounded ${task.status === 'COMPLETED' ? 'bg-green-100' : 'bg-amber-100'}`}>{task.status}</span>
                         {isOverdue(task) && <span className="px-2 py-0.5 text-xs rounded bg-red-100 text-red-800">Overdue</span>}
                         {task.due_date && <span className="text-sm text-gray-500">Due: {task.due_date}</span>}

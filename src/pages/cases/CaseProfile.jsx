@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getCase, addHearing, removeHearing, uploadCaseDocument, removeCaseDocument } from '../../services/caseApi';
+import { getCase, getCaseHistory, addHearing, removeHearing, uploadCaseDocument, removeCaseDocument } from '../../services/caseApi';
+import { listTasksByCase } from '../../services/taskApi';
+import ActivityTimeline from '../../components/case/ActivityTimeline';
+
+const TABS = ['Overview', 'Tasks', 'Assignment History', 'Activity Timeline'];
 
 export default function CaseProfile() {
   const { id } = useParams();
   const [caseRecord, setCaseRecord] = useState(null);
+  const [activeTab, setActiveTab] = useState('Overview');
+  const [historyData, setHistoryData] = useState({ assignmentHistory: [], activityTimeline: [] });
+  const [tasks, setTasks] = useState([]);
   const [error, setError] = useState('');
   const [hearingForm, setHearingForm] = useState({
     hearing_date: '',
@@ -25,6 +32,22 @@ export default function CaseProfile() {
   useEffect(() => {
     load();
   }, [id]);
+
+  useEffect(() => {
+    if (activeTab === 'Assignment History' || activeTab === 'Activity Timeline') {
+      getCaseHistory(id)
+        .then(({ data }) => setHistoryData({
+          assignmentHistory: data.data?.assignmentHistory || [],
+          activityTimeline: data.data?.activityTimeline || []
+        }))
+        .catch(() => setHistoryData({ assignmentHistory: [], activityTimeline: [] }));
+    }
+    if (activeTab === 'Tasks') {
+      listTasksByCase(id)
+        .then(({ data }) => setTasks(data.data || []))
+        .catch(() => setTasks([]));
+    }
+  }, [id, activeTab]);
 
   const handleAddHearing = async (e) => {
     e.preventDefault();
@@ -79,7 +102,9 @@ export default function CaseProfile() {
 
   const hearings = caseRecord.CaseHearings || [];
   const documents = caseRecord.CaseDocuments || [];
-  const assignmentHistory = caseRecord.AssignmentHistory || [];
+  const assignmentHistoryLegacy = caseRecord.AssignmentHistory || [];
+  const assignmentChanges = historyData.assignmentHistory || [];
+  const activityTimeline = historyData.activityTimeline || [];
   const judgeHistory = caseRecord.JudgeHistory || [];
   const lastHearing = hearings.length > 0 ? hearings[hearings.length - 1] : null;
 
@@ -98,6 +123,27 @@ export default function CaseProfile() {
 
       {error && <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">{error}</div>}
 
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="flex gap-1" aria-label="Case tabs">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 -mb-px transition-colors ${
+                activeTab === tab
+                  ? 'border-primary text-primary bg-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {activeTab === 'Overview' && (
+      <div className="space-y-6">
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-wrap gap-2">
           <span className={`px-2 py-0.5 text-xs rounded ${caseRecord.status === 'CLOSED' ? 'bg-gray-100' : caseRecord.status === 'DRAFT' ? 'bg-yellow-100' : 'bg-green-100 text-green-800'}`}>
@@ -127,11 +173,11 @@ export default function CaseProfile() {
         {caseRecord.Assignee?.email && <p className="text-sm text-gray-500">{caseRecord.Assignee.email}</p>}
       </div>
 
-      {assignmentHistory.length > 0 && (
+      {assignmentHistoryLegacy.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-primary mb-4">Assignment History</h2>
+          <h2 className="text-lg font-semibold text-primary mb-4">Current assignment period</h2>
           <ul className="space-y-3">
-            {[...assignmentHistory].reverse().map((a) => (
+            {[...assignmentHistoryLegacy].reverse().map((a) => (
               <li key={a.id} className="flex items-start gap-3 text-sm border-l-2 border-gray-200 pl-3 py-1">
                 <div className="flex-1">
                   <span className="font-medium">{a.Employee?.name || '—'}</span>
@@ -277,6 +323,72 @@ export default function CaseProfile() {
         </form>
         <p className="text-xs text-gray-500 mt-2">For full document management (upload file, versions, types), use Manage documents.</p>
       </div>
+      </div>
+      )}
+
+      {activeTab === 'Tasks' && (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-primary">Tasks</h2>
+            <Link to={`/cases/${id}/tasks`} className="text-sm text-primary hover:underline">Manage tasks →</Link>
+          </div>
+          {tasks.length === 0 ? (
+            <p className="text-gray-500 text-sm">No tasks. <Link to={`/cases/${id}/tasks`} className="text-primary hover:underline">Add task</Link></p>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {tasks.map((t) => (
+                <li key={t.id} className="py-3 flex justify-between items-start gap-2">
+                  <div>
+                    <p className="font-medium">{t.title}</p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      <span className={`px-2 py-0.5 text-xs rounded ${t.priority === 'URGENT' ? 'bg-red-100' : t.priority === 'HIGH' ? 'bg-orange-100' : 'bg-gray-100'}`}>{t.priority}</span>
+                      <span className={`px-2 py-0.5 text-xs rounded ${t.status === 'COMPLETED' ? 'bg-green-100' : 'bg-amber-100'}`}>{t.status}</span>
+                      {t.due_date && <span className="text-sm text-gray-500">Due: {t.due_date}</span>}
+                      {t.Assignee && <span className="text-sm text-gray-500">→ {t.Assignee.name}</span>}
+                    </div>
+                  </div>
+                  <Link to={`/cases/${id}/tasks`} className="text-sm text-primary shrink-0">Edit</Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'Assignment History' && (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-primary mb-4">Assignment history</h2>
+          {assignmentChanges.length === 0 ? (
+            <p className="text-gray-500 text-sm">No assignment changes recorded.</p>
+          ) : (
+            <ul className="space-y-3">
+              {assignmentChanges.map((a) => {
+                const prev = a.PreviousAssignee?.name || 'Unassigned';
+                const next = a.NewAssignee?.name || '—';
+                const by = a.ChangedByUser?.name || '—';
+                const at = a.created_at ? new Date(a.created_at).toLocaleString() : '';
+                return (
+                  <li key={a.id} className="flex items-start gap-3 text-sm border-l-2 border-primary/30 pl-3 py-2">
+                    <span className="shrink-0" aria-hidden>🔄</span>
+                    <div>
+                      <p className="font-medium text-gray-800">Case reassigned from {prev} to {next}.</p>
+                      <p className="text-gray-500 text-xs mt-1">By {by} · {at}</p>
+                      {a.change_reason && <p className="text-gray-500 text-xs mt-0.5">{a.change_reason}</p>}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'Activity Timeline' && (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-primary mb-4">Activity timeline</h2>
+          <ActivityTimeline items={activityTimeline} emptyMessage="No activity logged yet." />
+        </div>
+      )}
 
     </div>
   );
