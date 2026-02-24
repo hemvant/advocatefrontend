@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useOrgAuth } from '../context/OrgAuthContext';
 import OrgSidebar from '../components/OrgSidebar';
 import MobileHeader from '../components/MobileHeader';
+import QuickActionFab from '../components/QuickActionFab';
 import ExpiredSubscriptionPage from '../pages/org/ExpiredSubscriptionPage';
 
 export default function OrgLayout() {
@@ -31,8 +32,8 @@ export default function OrgLayout() {
         </div>
       )}
       <div
-        className="fixed inset-0 bg-black/50 z-20 transition-opacity md:hidden"
-        style={{ opacity: sidebarOpen ? 1 : 0, pointerEvents: sidebarOpen ? 'auto' : 'none' }}
+        className={`fixed inset-0 z-20 md:hidden transition-opacity duration-200 ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
         onClick={() => setSidebarOpen(false)}
         aria-hidden="true"
       />
@@ -43,6 +44,7 @@ export default function OrgLayout() {
           {showExpiredPage ? <ExpiredSubscriptionPage /> : <Outlet />}
         </div>
       </main>
+      <QuickActionFab />
     </div>
   );
 }

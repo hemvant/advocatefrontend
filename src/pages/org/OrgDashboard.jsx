@@ -5,6 +5,7 @@ import { getSetupStatus } from '../../services/orgApi';
 import { getDashboardHearings } from '../../services/hearingApi';
 import { getTaskDashboard } from '../../services/taskApi';
 import { getDocumentDashboard } from '../../services/documentApi';
+import { getBillingDashboardStats } from '../../services/billingApi';
 import PageLoader from '../../components/ui/PageLoader';
 import EmptyState from '../../components/ui/EmptyState';
 
@@ -17,6 +18,8 @@ export default function OrgDashboard() {
   const [loadingHearings, setLoadingHearings] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [billingStats, setBillingStats] = useState(null);
+  const [loadingBilling, setLoadingBilling] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
 
   useEffect(() => {
@@ -50,13 +53,24 @@ export default function OrgDashboard() {
     }
   }, [hasModule]);
 
+  useEffect(() => {
+    if (hasModule('Billing')) {
+      setLoadingBilling(true);
+      getBillingDashboardStats()
+        .then(({ data }) => setBillingStats(data?.data || null))
+        .catch(() => setBillingStats(null))
+        .finally(() => setLoadingBilling(false));
+    }
+  }, [hasModule]);
+
   const showHearings = hasModule('Case Management');
   const showDocuments = hasModule('Document Management');
+  const showBilling = hasModule('Billing');
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-primary mb-2">Dashboard</h1>
-      <p className="text-gray-600 mb-6">
+    <div className="pb-20 md:pb-0">
+      <h1 className="text-xl sm:text-2xl font-bold text-primary mb-1 sm:mb-2">Dashboard</h1>
+      <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base truncate">
         Welcome, {user?.name}. {user?.organization?.name && `(${user.organization.name})`}
       </p>
 
@@ -175,45 +189,71 @@ export default function OrgDashboard() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        <Link to="/documents" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium">Documents</Link>
-        <Link to="/calendar" className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 text-sm font-medium">Calendar</Link>
-        <Link to="/cases" className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 text-sm font-medium">Cases</Link>
-        <Link to="/clients" className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 text-sm font-medium">Clients</Link>
+      <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
+        {showHearings && (
+          <Link to="/today" className="min-h-[44px] min-w-[44px] inline-flex items-center px-4 py-2.5 bg-accent/20 text-primary rounded-lg hover:bg-accent/30 text-sm font-medium touch-manipulation">
+            Today
+          </Link>
+        )}
+        <Link to="/documents" className="min-h-[44px] min-w-[44px] inline-flex items-center px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium touch-manipulation">Documents</Link>
+        <Link to="/calendar" className="min-h-[44px] min-w-[44px] inline-flex items-center px-4 py-2.5 border border-primary text-primary rounded-lg hover:bg-primary/5 text-sm font-medium touch-manipulation">Calendar</Link>
+        <Link to="/cases" className="min-h-[44px] min-w-[44px] inline-flex items-center px-4 py-2.5 border border-primary text-primary rounded-lg hover:bg-primary/5 text-sm font-medium touch-manipulation">Cases</Link>
+        <Link to="/clients" className="min-h-[44px] min-w-[44px] inline-flex items-center px-4 py-2.5 border border-primary text-primary rounded-lg hover:bg-primary/5 text-sm font-medium touch-manipulation">Clients</Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-primary mb-2">Your organization</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm">
+          <h2 className="text-base sm:text-lg font-semibold text-primary mb-1 sm:mb-2">Your organization</h2>
           <p className="text-gray-600 text-sm">{user?.organization?.name || '—'}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-primary mb-2">Role</h2>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm">
+          <h2 className="text-base sm:text-lg font-semibold text-primary mb-1 sm:mb-2">Role</h2>
           <p className="text-gray-600 text-sm">{user?.role || '—'}</p>
         </div>
       </div>
 
+      {showBilling && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          {loadingBilling ? (
+            <div className="col-span-2 flex justify-center py-6"><div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-accent" /></div>
+          ) : (
+            <>
+              <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-3 sm:p-4">
+                <h3 className="text-xs sm:text-sm font-medium text-gray-500 uppercase">Total pending payments</h3>
+                <p className="text-xl sm:text-2xl font-bold text-amber-600 mt-1">₹{Number(billingStats?.total_pending_payments ?? 0).toLocaleString('en-IN')}</p>
+                <Link to="/billing" className="text-sm text-accent hover:underline mt-1 inline-block touch-manipulation">View billing</Link>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-3 sm:p-4">
+                <h3 className="text-xs sm:text-sm font-medium text-gray-500 uppercase">This month revenue</h3>
+                <p className="text-xl sm:text-2xl font-bold text-green-600 mt-1">₹{Number(billingStats?.this_month_revenue ?? 0).toLocaleString('en-IN')}</p>
+                <Link to="/billing" className="text-sm text-accent hover:underline mt-1 inline-block touch-manipulation">View billing</Link>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {showDocuments && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
           {loadingDocs ? (
             <div className="col-span-4 flex justify-center py-8"><div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-accent" /></div>
           ) : (
             <>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-4">
-            <h3 className="text-sm font-medium text-gray-500 uppercase">Total Documents</h3>
-            <p className="text-2xl font-bold text-primary mt-1">{docStats.total}</p>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-3 sm:p-4">
+            <h3 className="text-xs sm:text-sm font-medium text-gray-500 uppercase">Total Documents</h3>
+            <p className="text-xl sm:text-2xl font-bold text-primary mt-1">{docStats.total}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-500 uppercase">Documents Processed</h3>
-            <p className="text-2xl font-bold text-green-600 mt-1">{docStats.processed}</p>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 sm:p-4">
+            <h3 className="text-xs sm:text-sm font-medium text-gray-500 uppercase">Processed</h3>
+            <p className="text-xl sm:text-2xl font-bold text-green-600 mt-1">{docStats.processed}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-500 uppercase">Pending OCR</h3>
-            <p className="text-2xl font-bold text-amber-600 mt-1">{docStats.pending}</p>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 sm:p-4">
+            <h3 className="text-xs sm:text-sm font-medium text-gray-500 uppercase">Pending OCR</h3>
+            <p className="text-xl sm:text-2xl font-bold text-amber-600 mt-1">{docStats.pending}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-4">
-            <h3 className="text-sm font-medium text-gray-500 uppercase">Recent Uploads</h3>
-            <p className="text-2xl font-bold text-primary mt-1">{docStats.recent?.length ?? 0}</p>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-3 sm:p-4">
+            <h3 className="text-xs sm:text-sm font-medium text-gray-500 uppercase">Recent</h3>
+            <p className="text-xl sm:text-2xl font-bold text-primary mt-1">{docStats.recent?.length ?? 0}</p>
           </div>
           </>
           )}
@@ -242,8 +282,8 @@ export default function OrgDashboard() {
       )}
 
       {showHearings && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
             {loadingTasks ? (
               <div className="col-span-3"><PageLoader /></div>
             ) : (

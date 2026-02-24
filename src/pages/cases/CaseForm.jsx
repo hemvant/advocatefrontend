@@ -30,7 +30,9 @@ const defaultCase = {
   filing_date: '',
   next_hearing_date: '',
   description: '',
-  assigned_to: ''
+  assigned_to: '',
+  cnr_number: '',
+  auto_sync_enabled: false
 };
 
 export default function CaseForm({ caseRecord, onSubmit, loading, onClientsChange, onCourtsChange }) {
@@ -51,7 +53,9 @@ export default function CaseForm({ caseRecord, onSubmit, loading, onClientsChang
     filing_date: caseRecord.filing_date || '',
     next_hearing_date: caseRecord.next_hearing_date || '',
     description: caseRecord.description || '',
-    assigned_to: caseRecord.assigned_to || ''
+    assigned_to: caseRecord.assigned_to || '',
+    cnr_number: caseRecord.cnr_number || '',
+    auto_sync_enabled: caseRecord.auto_sync_enabled || false
   } : { ...defaultCase });
   const [clients, setClients] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -106,6 +110,10 @@ export default function CaseForm({ caseRecord, onSubmit, loading, onClientsChang
       assigned_to: form.assigned_to ? parseInt(form.assigned_to, 10) : null
     };
     if (caseRecord && form.case_lifecycle_status) payload.case_lifecycle_status = form.case_lifecycle_status;
+    if (caseRecord) {
+      payload.cnr_number = form.cnr_number ? String(form.cnr_number).trim() : null;
+      payload.auto_sync_enabled = !!form.auto_sync_enabled;
+    }
     onSubmit(payload);
   };
 
@@ -263,6 +271,30 @@ export default function CaseForm({ caseRecord, onSubmit, loading, onClientsChang
               {LIFECYCLE_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
+        )}
+        {caseRecord && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">CNR number (eCourts)</label>
+              <input
+                type="text"
+                value={form.cnr_number}
+                onChange={(e) => update('cnr_number', e.target.value)}
+                placeholder="e.g. CNR for eCourts sync"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="auto_sync_enabled"
+                checked={!!form.auto_sync_enabled}
+                onChange={(e) => update('auto_sync_enabled', e.target.checked)}
+                className="rounded border-gray-300 text-primary focus:ring-accent"
+              />
+              <label htmlFor="auto_sync_enabled" className="text-sm font-medium text-gray-700">Enable eCourts auto-sync (daily at 6 AM)</label>
+            </div>
+          </>
         )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Filing date</label>

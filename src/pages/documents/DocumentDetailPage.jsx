@@ -196,6 +196,22 @@ export default function DocumentDetailPage() {
             <div><dt className="text-sm text-gray-500">Case</dt><dd className="font-medium">{doc.Case ? <Link to={`/cases/${doc.Case.id}`} className="text-primary hover:underline">{doc.Case.case_title} ({doc.Case.case_number})</Link> : '—'}</dd></div>
             {doc.Case?.Client && <div><dt className="text-sm text-gray-500">Client</dt><dd className="font-medium">{doc.Case.Client.name}</dd></div>}
           </dl>
+          {doc.extracted_metadata && (doc.extracted_metadata.party_names?.length || doc.extracted_metadata.case_number || doc.extracted_metadata.dates?.length) && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Extracted (AI)</h3>
+              <dl className="grid grid-cols-1 gap-2 text-sm">
+                {doc.extracted_metadata.party_names?.length > 0 && (
+                  <div><dt className="text-gray-500">Party names</dt><dd className="font-medium">{doc.extracted_metadata.party_names.join(', ')}</dd></div>
+                )}
+                {doc.extracted_metadata.case_number && (
+                  <div><dt className="text-gray-500">Case number</dt><dd className="font-medium">{doc.extracted_metadata.case_number}</dd></div>
+                )}
+                {doc.extracted_metadata.dates?.length > 0 && (
+                  <div><dt className="text-gray-500">Dates</dt><dd className="font-medium">{doc.extracted_metadata.dates.join(', ')}</dd></div>
+                )}
+              </dl>
+            </div>
+          )}
         </div>
       )}
 

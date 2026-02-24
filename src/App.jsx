@@ -16,6 +16,7 @@ import NetworkErrorPage from './pages/errors/NetworkErrorPage';
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin';
 import OrgLogin from './pages/org/OrgLogin';
 import OrgDashboard from './pages/org/OrgDashboard';
+import TodayViewPage from './pages/org/TodayViewPage';
 import OrgEmployees from './pages/org/OrgEmployees';
 import OrgModules from './pages/org/OrgModules';
 import ClientList from './pages/clients/ClientList';
@@ -41,7 +42,9 @@ import AuditLogsPage from './pages/audit/AuditLogsPage';
 import TasksPage from './pages/tasks/TasksPage';
 import CaseTasksPage from './pages/tasks/CaseTasksPage';
 import BillingPage from './pages/billing/BillingPage';
+import ExpensesByCasePage from './pages/billing/ExpensesByCasePage';
 import AnalyticsPage from './pages/reports/AnalyticsPage';
+import DraftGeneratorPage from './pages/ai/DraftGeneratorPage';
 
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'));
 const SuperAdminOrganizationsPage = lazy(() => import('./pages/superadmin/SuperAdminOrganizationsPage'));
@@ -105,6 +108,7 @@ export default function App() {
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<OrgDashboard />} />
+            <Route path="today" element={<TodayViewPage />} />
             <Route path="employees" element={<OrgEmployees />} />
             <Route path="modules" element={<OrgModules />} />
             <Route path="clients" element={<ClientList />} />
@@ -128,9 +132,11 @@ export default function App() {
             <Route path="documents" element={<DocumentListPage />} />
             <Route path="documents/:id" element={<DocumentDetailPage />} />
             <Route path="billing" element={<BillingPage />} />
+            <Route path="billing/expenses" element={<ExpensesByCasePage />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="hearings/:id" element={<HearingDetail />} />
             <Route path="reports" element={<AnalyticsPage />} />
+            <Route path="drafts" element={<DraftGeneratorPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

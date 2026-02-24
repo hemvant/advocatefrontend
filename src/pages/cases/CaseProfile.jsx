@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getCase, getCaseHistory, addHearing, removeHearing, uploadCaseDocument, removeCaseDocument } from '../../services/caseApi';
+import { getCase, getCaseHistory, addHearing, removeHearing, uploadCaseDocument, removeCaseDocument, syncCaseFromECourts, sendHearingReminderWhatsApp, generateCaseSummary } from '../../services/caseApi';
 import { listTasksByCase } from '../../services/taskApi';
 import ActivityTimeline from '../../components/case/ActivityTimeline';
 
@@ -22,6 +22,9 @@ export default function CaseProfile() {
     next_hearing_date: ''
   });
   const [docForm, setDocForm] = useState({ file_name: '', file_path: '' });
+  const [syncing, setSyncing] = useState(false);
+  const [whatsappSending, setWhatsappSending] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   const load = () => {
     getCase(id)
@@ -97,6 +100,45 @@ export default function CaseProfile() {
     }
   };
 
+  const handleSyncFromECourts = async () => {
+    setSyncing(true);
+    setError('');
+    try {
+      await syncCaseFromECourts(id);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'eCourts sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleSendWhatsApp = async () => {
+    setWhatsappSending(true);
+    setError('');
+    try {
+      await sendHearingReminderWhatsApp(id);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Send WhatsApp failed');
+    } finally {
+      setWhatsappSending(false);
+    }
+  };
+
+  const handleGenerateSummary = async () => {
+    setSummaryLoading(true);
+    setError('');
+    try {
+      await generateCaseSummary(id);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to generate summary');
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
   if (error && !caseRecord) return <div className="p-4 text-red-600">{error}</div>;
   if (!caseRecord) return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-accent" /></div>;
 
@@ -115,7 +157,15 @@ export default function CaseProfile() {
           <h1 className="text-2xl font-bold text-primary">{caseRecord.case_title}</h1>
           <p className="text-gray-500 mt-1">{caseRecord.case_number}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleSendWhatsApp}
+            disabled={whatsappSending}
+            className="px-4 py-2 border border-green-600 text-green-700 rounded-lg hover:bg-green-50 disabled:opacity-50 inline-flex items-center gap-1"
+          >
+            {whatsappSending ? 'Sending…' : 'Send WhatsApp'}
+          </button>
           <Link to={`/cases/${id}/tasks`} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Tasks</Link>
           <Link to={`/cases/${id}/edit`} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Edit</Link>
         </div>
@@ -161,10 +211,70 @@ export default function CaseProfile() {
           <div><dt className="text-sm text-gray-500">Filing date</dt><dd className="font-medium">{caseRecord.filing_date || '—'}</dd></div>
           <div><dt className="text-sm text-gray-500">Next hearing</dt><dd className="font-medium">{caseRecord.next_hearing_date || '—'}</dd></div>
           <div className="md:col-span-2"><dt className="text-sm text-gray-500">Created by</dt><dd className="font-medium">{caseRecord.Creator?.name || '—'}</dd></div>
+          {caseRecord.cnr_number && (
+            <div className="md:col-span-2"><dt className="text-sm text-gray-500">CNR number</dt><dd className="font-medium font-mono">{caseRecord.cnr_number}</dd></div>
+          )}
           {caseRecord.description && (
             <div className="md:col-span-2"><dt className="text-sm text-gray-500">Description</dt><dd className="font-medium whitespace-pre-wrap">{caseRecord.description}</dd></div>
           )}
         </dl>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
+        <h2 className="text-lg font-semibold text-primary mb-3">eCourts status</h2>
+        {caseRecord.cnr_number ? (
+          <>
+            <div className="flex flex-wrap items-center gap-3 mb-3">
+              <button
+                type="button"
+                onClick={handleSyncFromECourts}
+                disabled={syncing}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 text-sm"
+              >
+                {syncing ? 'Syncing…' : 'Sync from eCourts'}
+              </button>
+              {caseRecord.auto_sync_enabled && (
+                <span className="px-2 py-0.5 text-xs rounded bg-green-100 text-green-800">Auto-sync on</span>
+              )}
+            </div>
+            {caseRecord.last_synced_at && (
+              <p className="text-sm text-gray-500 mb-2">Last synced: {new Date(caseRecord.last_synced_at).toLocaleString()}</p>
+            )}
+            {caseRecord.external_status && (
+              <p className="mb-1">
+                <span className="text-sm text-gray-500 mr-2">External status:</span>
+                <span className="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-800">{caseRecord.external_status}</span>
+              </p>
+            )}
+            {caseRecord.external_next_hearing_date && (
+              <p className="text-sm text-gray-600">External next hearing: <strong>{caseRecord.external_next_hearing_date}</strong></p>
+            )}
+            {!caseRecord.last_synced_at && !caseRecord.external_status && !caseRecord.external_next_hearing_date && (
+              <p className="text-sm text-gray-500">Not synced yet. Click &quot;Sync from eCourts&quot; to fetch status.</p>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-gray-500">Add CNR number and optionally enable auto-sync in <Link to={`/cases/${id}/edit`} className="text-accent font-medium hover:underline">Edit Case</Link> to use eCourts sync.</p>
+        )}
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
+        <h2 className="text-lg font-semibold text-primary mb-3">Case summary</h2>
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <button
+            type="button"
+            onClick={handleGenerateSummary}
+            disabled={summaryLoading}
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 text-sm"
+          >
+            {summaryLoading ? 'Generating…' : 'Generate Case Summary'}
+          </button>
+        </div>
+        {caseRecord.case_summary ? (
+          <div className="text-gray-700 whitespace-pre-wrap border border-gray-200 rounded-lg p-4 bg-gray-50">{caseRecord.case_summary}</div>
+        ) : (
+          <p className="text-sm text-gray-500">No summary yet. Click &quot;Generate Case Summary&quot; to create one (uses AI when configured, else static).</p>
+        )}
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">

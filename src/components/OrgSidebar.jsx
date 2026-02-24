@@ -11,7 +11,8 @@ const MODULE_LINKS = [
   { name: 'Billing', path: '/billing', icon: '💰', moduleName: 'Billing' },
   { name: 'Calendar', path: '/calendar', icon: '📅', moduleName: 'Calendar' },
   { name: 'Reports', path: '/reports', icon: '📊', moduleName: 'Reports' },
-  { name: 'Audit Logs', path: '/audit-logs', icon: '📋', moduleName: 'Reports' }
+  { name: 'Audit Logs', path: '/audit-logs', icon: '📋', moduleName: 'Reports' },
+  { name: 'Draft generator', path: '/drafts', icon: '✍️', moduleName: 'Case Management' }
 ];
 
 function UpgradeModal({ onClose }) {
@@ -47,7 +48,8 @@ export default function OrgSidebar({ open = false, onClose }) {
   const getModuleName = (item) => item.moduleName || item.name;
 
   const sidebarClasses = [
-    'fixed left-0 top-0 z-30 h-full w-64 max-w-[85vw] bg-primary text-white flex flex-col shadow-lg transition-transform duration-200 ease-out',
+    'fixed left-0 top-0 z-30 h-full w-64 max-w-[85vw] bg-primary text-white flex flex-col shadow-xl',
+    'transition-transform duration-300 ease-out will-change-transform',
     open ? 'translate-x-0' : '-translate-x-full',
     'md:translate-x-0 md:max-w-none'
   ].join(' ');
@@ -82,6 +84,17 @@ export default function OrgSidebar({ open = false, onClose }) {
         >
           <span>🏠</span> Dashboard
         </NavLink>
+        {(hasModule('Case Management') || hasModule('Calendar')) && (
+          <NavLink
+            to="/today"
+            onClick={handleNavClick}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-6 py-3.5 text-sm transition-colors hover:bg-white/10 hover:text-accent min-touch ${isActive ? 'bg-white/10 text-accent border-l-4 border-accent' : ''}`
+            }
+          >
+            <span>📋</span> Today
+          </NavLink>
+        )}
         {MODULE_LINKS.map((item) => {
           const moduleName = getModuleName(item);
           const inPlan = item.name === 'Calendar' ? (isModuleInPlan('Calendar') || isModuleInPlan('Case Management')) : isModuleInPlan(moduleName);

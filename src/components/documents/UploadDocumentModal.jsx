@@ -5,6 +5,52 @@ const DOC_TYPES = ['PETITION', 'EVIDENCE', 'AGREEMENT', 'NOTICE', 'ORDER', 'OTHE
 const ACCEPT_TYPES = '.pdf,.doc,.docx,.txt,.xls,.xlsx,image/jpeg,image/png,image/gif,image/webp';
 const MAX_FILE_SIZE_MB = 25;
 const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
+const IMAGE_MAX_WIDTH = 1920;
+const IMAGE_QUALITY = 0.85;
+
+function isImageFile(file) {
+  return file && file.type && file.type.startsWith('image/');
+}
+
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const { width, height } = img;
+      const scale = width > IMAGE_MAX_WIDTH ? IMAGE_MAX_WIDTH / width : 1;
+      const w = Math.round(width * scale);
+      const h = Math.round(height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file);
+            return;
+          }
+          const name = (file.name || 'image.jpg').replace(/\.[^.]+$/i, '.jpg');
+          resolve(new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() }));
+        },
+        'image/jpeg',
+        IMAGE_QUALITY
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+    img.src = url;
+  });
+}
 
 export default function UploadDocumentModal({ caseId, cases = [], onClose, onSuccess }) {
   const [selectedCaseId, setSelectedCaseId] = useState(caseId || '');
@@ -13,7 +59,10 @@ export default function UploadDocumentModal({ caseId, cases = [], onClose, onSuc
   const [notes, setNotes] = useState('');
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [compressing, setCompressing] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = React.useRef(null);
+  const cameraInputRef = React.useRef(null);
 
   const effectiveCaseId = caseId || (selectedCaseId ? Number(selectedCaseId) : null);
   const showCaseSelect = caseId == null;
@@ -58,6 +107,28 @@ export default function UploadDocumentModal({ caseId, cases = [], onClose, onSuc
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleFileChange = async (e) => {
+    const next = e.target.files?.[0] || null;
+    if (!next) {
+      setFile(null);
+      return;
+    }
+    if (isImageFile(next)) {
+      setCompressing(true);
+      try {
+        const compressed = await compressImage(next);
+        setFile(compressed);
+      } catch {
+        setFile(next);
+      } finally {
+        setCompressing(false);
+      }
+    } else {
+      setFile(next);
+    }
+    e.target.value = '';
   };
 
   return (
@@ -107,12 +178,35 @@ export default function UploadDocumentModal({ caseId, cases = [], onClose, onSuc
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">File *</label>
-            <input
-              type="file"
-              accept={ACCEPT_TYPES}
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
-            />
+            <div className="space-y-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPT_TYPES}
+                onChange={handleFileChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent text-sm file:mr-2 file:py-2 file:px-3 file:rounded file:border-0 file:text-sm file:bg-primary file:text-white file:cursor-pointer"
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 text-sm">or</span>
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="upload-doc-camera"
+                />
+                <label
+                  htmlFor="upload-doc-camera"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer touch-manipulation"
+                >
+                  <span aria-hidden>📷</span> Take photo
+                </label>
+              </div>
+            </div>
+            {compressing && <p className="text-xs text-gray-500 mt-1">Compressing image…</p>}
+            {file && <p className="text-xs text-gray-500 mt-1 truncate">{file.name} ({(file.size / 1024).toFixed(1)} KB)</p>}
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
@@ -126,8 +220,8 @@ export default function UploadDocumentModal({ caseId, cases = [], onClose, onSuc
           </div>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={submitting} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50">
-              {submitting ? 'Uploading…' : 'Upload'}
+            <button type="submit" disabled={submitting || compressing} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50">
+              {submitting ? 'Uploading…' : compressing ? 'Preparing…' : 'Upload'}
             </button>
           </div>
         </form>

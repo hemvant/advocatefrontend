@@ -8,6 +8,9 @@ export const createCase = (data) => api.post('/cases', data);
 export const updateCase = (id, data) => api.put(`/cases/${id}`, data);
 export const softDeleteCase = (id) => api.delete(`/cases/${id}`);
 
+export const syncCaseFromECourts = (id) => api.post(`/cases/${id}/sync-ecourts`);
+export const sendHearingReminderWhatsApp = (id) => api.post(`/cases/${id}/send-hearing-reminder`);
+export const generateCaseSummary = (id) => api.post(`/cases/${id}/generate-summary`);
 export const addHearing = (caseId, data) => api.post(`/cases/${caseId}/hearings`, data);
 export const removeHearing = (caseId, hearingId) => api.delete(`/cases/${caseId}/hearings/${hearingId}`);
 export const uploadCaseDocument = (caseId, data) => api.post(`/cases/${caseId}/documents`, data);
