@@ -1,8 +1,13 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const apiUrl = env.VITE_API_URL || 'http://localhost:5000/api';
+  const proxyTarget = apiUrl.replace(/\/api\/?$/, '') || 'http://localhost:5000';
+
+  return {
   plugins: [
     react(),
     VitePWA({
@@ -34,13 +39,14 @@ export default defineConfig({
     })
   ],
   server: {
-    host: "0.0.0.0",     // 🔥 important (allow network access)
+    host: '0.0.0.0',
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://192.168.1.6:5000',  // 🔥 backend IP
+        target: proxyTarget,
         changeOrigin: true
       }
     }
   }
+  };
 });

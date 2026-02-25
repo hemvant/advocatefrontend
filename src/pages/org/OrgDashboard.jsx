@@ -74,6 +74,20 @@ export default function OrgDashboard() {
         Welcome, {user?.name}. {user?.organization?.name && `(${user.organization.name})`}
       </p>
 
+      {user?.organization?.is_trial && user?.organization?.trial_ends_at && (() => {
+        const end = new Date(user.organization.trial_ends_at);
+        const now = new Date();
+        const days = Math.max(0, Math.ceil((end - now) / (24 * 60 * 60 * 1000)));
+        return (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <p className="text-amber-800 font-medium">
+              {days === 0 ? 'Trial ends today' : days === 1 ? 'Trial ends in 1 day' : `Trial ends in ${days} days`}
+            </p>
+            <p className="text-amber-700 text-sm mt-1">Upgrade to a plan to continue after your trial.</p>
+          </div>
+        );
+      })()}
+
       {hasModule('Case Management') && setupStatus && !setupStatus.is_initial_setup_complete && (
         <div className="bg-white border border-gray-200 rounded-lg shadow-soft p-4 mb-6">
           <div className="flex justify-between items-start gap-2">

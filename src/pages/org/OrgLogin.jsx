@@ -40,7 +40,7 @@ export default function OrgLogin() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
           <h1 className="text-2xl font-bold text-primary mb-2">AdvocateLearn</h1>
-          <p className="text-gray-600 mb-6">Sign in to your organization</p>
+          <p className="text-gray-600 mb-6">Sign in as advocate or organization</p>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">{error}</div>
@@ -74,6 +74,8 @@ export default function OrgLogin() {
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-gray-600">
+            Don&apos;t have an account? <Link to="/register" className="text-accent font-medium hover:underline">Register</Link>
+            {' · '}
             Super Admin? <Link to="/super-admin/login" className="text-accent font-medium hover:underline">Sign in here</Link>
           </p>
         </div>

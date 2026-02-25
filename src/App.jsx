@@ -15,6 +15,8 @@ import ServerErrorPage from './pages/errors/ServerErrorPage';
 import NetworkErrorPage from './pages/errors/NetworkErrorPage';
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin';
 import OrgLogin from './pages/org/OrgLogin';
+import Register from './pages/org/Register';
+import VerifyEmail from './pages/org/VerifyEmail';
 import OrgDashboard from './pages/org/OrgDashboard';
 import TodayViewPage from './pages/org/TodayViewPage';
 import OrgEmployees from './pages/org/OrgEmployees';
@@ -98,6 +100,8 @@ export default function App() {
           </Route>
 
           <Route path="/login" element={<OrgLogin />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route
             path="/"
             element={

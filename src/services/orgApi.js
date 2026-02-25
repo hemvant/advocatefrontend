@@ -1,5 +1,7 @@
 import api from './api';
 
+export const orgRegister = (data) => api.post('/register', data);
+export const verifyEmail = (token) => api.get(`/verify-email/${token}`);
 export const orgLogin = (data) => api.post('/org/login', data);
 export const orgLogout = () => api.post('/org/logout');
 export const orgGetMe = () => api.get('/org/me');
