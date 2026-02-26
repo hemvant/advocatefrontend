@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { uploadDocument } from '../../services/documentApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const DOC_TYPES = ['PETITION', 'EVIDENCE', 'AGREEMENT', 'NOTICE', 'ORDER', 'OTHER'];
 const ACCEPT_TYPES = '.pdf,.doc,.docx,.txt,.xls,.xlsx,image/jpeg,image/png,image/gif,image/webp';
@@ -103,7 +104,7 @@ export default function UploadDocumentModal({ caseId, cases = [], onClose, onSuc
       await uploadDocument(formData);
       onSuccess();
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.errors?.[0]?.message || 'Upload failed');
+      setError(getApiMessage(err, 'Upload failed'));
     } finally {
       setSubmitting(false);
     }

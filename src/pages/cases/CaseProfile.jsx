@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getCase, getCaseHistory, addHearing, removeHearing, uploadCaseDocument, removeCaseDocument, syncCaseFromECourts, sendHearingReminderWhatsApp, generateCaseSummary } from '../../services/caseApi';
 import { listTasksByCase } from '../../services/taskApi';
 import ActivityTimeline from '../../components/case/ActivityTimeline';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const TABS = ['Overview', 'Tasks', 'Assignment History', 'Activity Timeline'];
 
@@ -54,19 +55,29 @@ export default function CaseProfile() {
 
   const handleAddHearing = async (e) => {
     e.preventDefault();
+    const dateVal = (hearingForm.hearing_date || '').trim();
+    if (!dateVal) {
+      setError('Please enter hearing date.');
+      return;
+    }
+    setError('');
     try {
-      await addHearing(id, {
-        hearing_date: hearingForm.hearing_date || null,
-        courtroom: hearingForm.courtroom || null,
-        remarks: hearingForm.remarks || null,
+      // datetime-local gives YYYY-MM-DDTHH:mm; backend accepts that or YYYY-MM-DDTHH:mm:00
+      const hearingDateIso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dateVal) ? `${dateVal}:00` : dateVal;
+      const nextDateVal = (hearingForm.next_hearing_date || '').trim();
+      const payload = {
+        hearing_date: hearingDateIso,
+        courtroom: hearingForm.courtroom?.trim() || null,
+        remarks: hearingForm.remarks?.trim() || null,
         outcome_status: hearingForm.outcome_status || null,
-        outcome_notes: hearingForm.outcome_notes || null,
-        next_hearing_date: hearingForm.next_hearing_date || null
-      });
+        outcome_notes: hearingForm.outcome_notes?.trim() || null,
+        next_hearing_date: nextDateVal || null
+      };
+      await addHearing(id, payload);
       setHearingForm({ hearing_date: '', courtroom: '', remarks: '', outcome_status: '', outcome_notes: '', next_hearing_date: '' });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add hearing');
+      setError(getApiMessage(err, 'Failed to add hearing'));
     }
   };
 
@@ -75,7 +86,7 @@ export default function CaseProfile() {
       await removeHearing(id, hearingId);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to remove');
+      setError(getApiMessage(err, 'Failed to remove'));
     }
   };
 
@@ -87,7 +98,7 @@ export default function CaseProfile() {
       setDocForm({ file_name: '', file_path: '' });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Upload failed');
+      setError(getApiMessage(err, 'Upload failed'));
     }
   };
 
@@ -96,7 +107,7 @@ export default function CaseProfile() {
       await removeCaseDocument(id, docId);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Remove failed');
+      setError(getApiMessage(err, 'Remove failed'));
     }
   };
 
@@ -107,7 +118,7 @@ export default function CaseProfile() {
       await syncCaseFromECourts(id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'eCourts sync failed');
+      setError(getApiMessage(err, 'eCourts sync failed'));
     } finally {
       setSyncing(false);
     }
@@ -120,7 +131,7 @@ export default function CaseProfile() {
       await sendHearingReminderWhatsApp(id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Send WhatsApp failed');
+      setError(getApiMessage(err, 'Send WhatsApp failed'));
     } finally {
       setWhatsappSending(false);
     }
@@ -133,7 +144,7 @@ export default function CaseProfile() {
       await generateCaseSummary(id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to generate summary');
+      setError(getApiMessage(err, 'Failed to generate summary'));
     } finally {
       setSummaryLoading(false);
     }
@@ -379,8 +390,8 @@ export default function CaseProfile() {
         <form onSubmit={handleAddHearing} className="space-y-3">
           <div className="flex flex-wrap gap-3 items-end">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Date</label>
-              <input type="datetime-local" value={hearingForm.hearing_date} onChange={(e) => setHearingForm({ ...hearingForm, hearing_date: e.target.value })} className="px-2 py-1 border rounded" />
+              <label className="block text-xs text-gray-500 mb-1">Date <span className="text-red-500">*</span></label>
+              <input type="datetime-local" value={hearingForm.hearing_date} onChange={(e) => setHearingForm({ ...hearingForm, hearing_date: e.target.value })} className="px-2 py-1 border rounded" required />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Courtroom</label>

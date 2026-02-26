@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { listDocuments, softDeleteDocument, downloadDocument } from '../../services/documentApi';
 import { getCase } from '../../services/caseApi';
 import UploadDocumentModal from '../../components/documents/UploadDocumentModal';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const DOC_TYPES = ['PETITION', 'EVIDENCE', 'AGREEMENT', 'NOTICE', 'ORDER', 'OTHER'];
 
@@ -35,7 +36,7 @@ export default function CaseDocumentsPage() {
       setItems(data.data || []);
       setTotal(data.total ?? 0);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load documents');
+      setError(getApiMessage(err, 'Failed to load documents'));
     } finally {
       setLoading(false);
     }
@@ -61,7 +62,7 @@ export default function CaseDocumentsPage() {
       await softDeleteDocument(doc.id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      setError(getApiMessage(err, 'Delete failed'));
     }
   };
 
@@ -75,7 +76,7 @@ export default function CaseDocumentsPage() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.response?.data?.message || 'Download failed');
+      setError(getApiMessage(err, 'Download failed'));
     }
   };
 

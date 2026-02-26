@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getClient, addOpponent, removeOpponent, assignTagToClient, removeTagFromClient } from '../../services/clientApi';
 import { listTags } from '../../services/clientApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function ClientProfile() {
   const { id } = useParams();
@@ -32,7 +33,7 @@ export default function ClientProfile() {
       setOpponentForm({ name: '', phone: '', address: '', notes: '' });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add opponent');
+      setError(getApiMessage(err, 'Failed to add opponent'));
     }
   };
 
@@ -41,7 +42,7 @@ export default function ClientProfile() {
       await removeOpponent(id, opponentId);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to remove');
+      setError(getApiMessage(err, 'Failed to remove'));
     }
   };
 
@@ -53,7 +54,7 @@ export default function ClientProfile() {
       setTagSelect('');
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add tag');
+      setError(getApiMessage(err, 'Failed to add tag'));
     }
   };
 
@@ -62,7 +63,7 @@ export default function ClientProfile() {
       await removeTagFromClient(id, tagId);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to remove tag');
+      setError(getApiMessage(err, 'Failed to remove tag'));
     }
   };
 

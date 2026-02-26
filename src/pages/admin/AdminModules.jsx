@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAllModules } from '../../services/moduleService';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function AdminModules() {
   const [modules, setModules] = useState([]);
@@ -10,7 +11,7 @@ export default function AdminModules() {
   useEffect(() => {
     getAllModules()
       .then((res) => setModules(res.data.modules))
-      .catch((err) => setError(err.response?.data?.message || 'Failed to load modules'))
+      .catch((err) => setError(getApiMessage(err, 'Failed to load modules')))
       .finally(() => setLoading(false));
   }, []);
 

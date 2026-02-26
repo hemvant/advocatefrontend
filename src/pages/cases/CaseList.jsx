@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { listCases, softDeleteCase } from '../../services/caseApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const STATUSES = ['DRAFT', 'FILED', 'HEARING', 'ARGUMENT', 'JUDGMENT', 'CLOSED'];
 const CASE_TYPES = ['CIVIL', 'CRIMINAL', 'CORPORATE', 'TAX', 'FAMILY', 'OTHER'];
@@ -29,7 +30,7 @@ export default function CaseList() {
       setData(res.data || []);
       setPagination(res.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load cases');
+      setError(getApiMessage(err, 'Failed to load cases'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +52,7 @@ export default function CaseList() {
       await softDeleteCase(caseRecord.id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      setError(getApiMessage(err, 'Delete failed'));
     }
   };
 

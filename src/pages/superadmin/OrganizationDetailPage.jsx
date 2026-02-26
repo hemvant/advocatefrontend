@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getOrganizationDetail, resetOrgAdminPassword, getPackages, assignSubscription } from '../../services/superAdminApi';
 import PasswordInput from '../../components/PasswordInput';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function OrganizationDetailPage() {
   const { id } = useParams();
@@ -21,7 +22,7 @@ export default function OrganizationDetailPage() {
   useEffect(() => {
     getOrganizationDetail(id)
       .then(function(r) { setData(r.data.data); })
-      .catch(function(e) { setError(e.response && e.response.data && e.response.data.message || 'Failed'); })
+      .catch((e) => setError(getApiMessage(e, 'Failed')))
       .finally(function() { setLoading(false); });
   }, [id]);
 
@@ -42,7 +43,7 @@ export default function OrganizationDetailPage() {
       setResetPasswordOpen(false);
       setResetPasswordForm({ new_password: '', confirm: '' });
     } catch (err) {
-      setResetPasswordError(err.response?.data?.message || 'Reset failed');
+      setResetPasswordError(getApiMessage(err, 'Reset failed'));
     } finally {
       setResetPasswordLoading(false);
     }
@@ -73,7 +74,7 @@ export default function OrganizationDetailPage() {
       setAssignSubOpen(false);
       getOrganizationDetail(id).then((r) => setData(r.data.data)).catch(() => {});
     } catch (err) {
-      setAssignError(err.response?.data?.message || 'Assign failed');
+      setAssignError(getApiMessage(err, 'Assign failed'));
     } finally {
       setAssignLoading(false);
     }

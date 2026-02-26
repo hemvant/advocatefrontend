@@ -35,3 +35,10 @@ export const markInvoicePaid = (id, data = {}) => api.put(`/super-admin/invoices
 export const getPlatformAuditLogs = (params) => api.get('/super-admin/audit-logs', { params });
 export const resetOrgAdminPassword = (organizationId, newPassword) =>
   api.put(`/super-admin/organizations/${organizationId}/reset-admin-password`, { new_password: newPassword });
+
+export const getAiConfig = () => api.get('/super-admin/ai/config');
+export const updateAiConfig = (data) => api.put('/super-admin/ai/config', data);
+export const getAiUsage = (params) => api.get('/super-admin/ai/usage', { params });
+export const getAiUsageCost = (params) => api.get('/super-admin/ai/usage/cost', { params });
+export const getAiPromptTemplates = () => api.get('/super-admin/ai/prompt-templates');
+export const updateAiPromptTemplate = (id, data) => api.put(`/super-admin/ai/prompt-templates/${id}`, data);

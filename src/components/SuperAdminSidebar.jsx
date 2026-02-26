@@ -47,6 +47,7 @@ export default function SuperAdminSidebar({ open = false, onClose }) {
         <NavLink to="/super-admin/invoices" onClick={handleNavClick} className={({ isActive }) => 'flex items-center gap-3 px-6 py-3.5 text-sm transition-colors hover:bg-white/10 hover:text-accent min-touch' + (isActive ? ' bg-white/10 text-accent border-l-4 border-accent' : '')}>Invoices</NavLink>
         <NavLink to="/super-admin/audit-logs" onClick={handleNavClick} className={({ isActive }) => 'flex items-center gap-3 px-6 py-3.5 text-sm transition-colors hover:bg-white/10 hover:text-accent min-touch' + (isActive ? ' bg-white/10 text-accent border-l-4 border-accent' : '')}>Audit Logs</NavLink>
         <NavLink to="/super-admin/system-health" onClick={handleNavClick} className={({ isActive }) => 'flex items-center gap-3 px-6 py-3.5 text-sm transition-colors hover:bg-white/10 hover:text-accent min-touch' + (isActive ? ' bg-white/10 text-accent border-l-4 border-accent' : '')}>System Health</NavLink>
+        <NavLink to="/super-admin/ai-config" onClick={handleNavClick} className={({ isActive }) => 'flex items-center gap-3 px-6 py-3.5 text-sm transition-colors hover:bg-white/10 hover:text-accent min-touch' + (isActive ? ' bg-white/10 text-accent border-l-4 border-accent' : '')}>AI Config</NavLink>
       </nav>
       <div className="p-4 border-t border-white/10">
         <button

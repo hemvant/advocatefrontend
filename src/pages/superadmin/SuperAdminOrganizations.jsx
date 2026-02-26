@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getOrganizations, createOrganization, updateOrganization, getOrganizationModules, assignOrganizationModules, getAllModules } from '../../services/superAdminApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function SuperAdminOrganizations() {
   const [organizations, setOrganizations] = useState([]);
@@ -13,7 +14,7 @@ export default function SuperAdminOrganizations() {
       const { data } = await getOrganizations();
       setOrganizations(data.data || []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load organizations');
+      setError(getApiMessage(err, 'Failed to load organizations'));
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ export default function SuperAdminOrganizations() {
       setModal(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Create failed');
+      setError(getApiMessage(err, 'Create failed'));
     }
   };
 
@@ -59,7 +60,7 @@ export default function SuperAdminOrganizations() {
       setModal(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 
@@ -69,7 +70,7 @@ export default function SuperAdminOrganizations() {
       await assignOrganizationModules(modal.id, modal.assigned);
       setModal(null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 

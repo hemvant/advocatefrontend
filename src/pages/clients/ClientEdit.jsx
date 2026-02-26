@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getClient, updateClient } from '../../services/clientApi';
 import ClientForm from './ClientForm';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function ClientEdit() {
   const { id } = useParams();
@@ -24,7 +25,7 @@ export default function ClientEdit() {
       await updateClient(id, payload);
       navigate(`/clients/${id}`);
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     } finally {
       setLoading(false);
     }

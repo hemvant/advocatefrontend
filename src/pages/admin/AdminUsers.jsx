@@ -3,6 +3,7 @@ import { getUsers, approveUser, updateUser, assignModules } from '../../services
 import { getAllModules } from '../../services/moduleService';
 import { getRoles } from '../../services/roleService';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -22,7 +23,7 @@ export default function AdminUsers() {
       setModules(mRes.data.modules);
       setRoles(rRes.data.roles || []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load');
+      setError(getApiMessage(err, 'Failed to load'));
     } finally {
       setLoading(false);
     }
@@ -37,7 +38,7 @@ export default function AdminUsers() {
       await approveUser(user.id, is_approved);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update');
+      setError(getApiMessage(err, 'Failed to update'));
     }
   };
 
@@ -53,7 +54,7 @@ export default function AdminUsers() {
       setAssignModal(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to assign modules');
+      setError(getApiMessage(err, 'Failed to assign modules'));
     }
   };
 
@@ -62,7 +63,7 @@ export default function AdminUsers() {
       await updateUser(user.id, { is_active: !user.is_active });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update');
+      setError(getApiMessage(err, 'Failed to update'));
     }
   };
 
@@ -71,7 +72,7 @@ export default function AdminUsers() {
       await updateUser(user.id, { role_id: Number(roleId) });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update role');
+      setError(getApiMessage(err, 'Failed to update role'));
     }
   };
 

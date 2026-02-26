@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useOrgAuth } from '../../context/OrgAuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import { getApiMessage } from '../../services/apiHelpers';
@@ -21,12 +21,15 @@ const CHANGE_TYPE_LABEL = {
 
 export default function DocumentDetailPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { isOrgAdmin } = useOrgAuth();
   const [doc, setDoc] = useState(null);
   const [error, setError] = useState('');
   const [tab, setTab] = useState('details');
   const [versionOpen, setVersionOpen] = useState(false);
   const [versionFile, setVersionFile] = useState(null);
+  const [versionChangeNote, setVersionChangeNote] = useState('');
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [versions, setVersions] = useState([]);
   const [versionsTotal, setVersionsTotal] = useState(0);
@@ -60,8 +63,29 @@ export default function DocumentDetailPage() {
   }, [id]);
 
   useEffect(() => {
+    if (doc && searchParams.get('preview') === '1' && doc.mime_type === 'application/pdf' && !previewUrl) {
+      handlePreviewPdf();
+    }
+  }, [doc]);
+
+  useEffect(() => {
     if (tab === 'versions' && id) loadVersions();
   }, [id, tab, versionsPage]);
+
+  const handlePreviewPdf = async () => {
+    try {
+      const { data } = await downloadDocument(id);
+      const url = window.URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+      setPreviewUrl(url);
+    } catch (err) {
+      showError(getApiMessage(err, 'Preview failed'));
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (previewUrl) window.URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  };
 
   const handleDownload = async () => {
     try {
@@ -117,10 +141,12 @@ export default function DocumentDetailPage() {
     try {
       const formData = new FormData();
       formData.append('file', versionFile);
+      if (versionChangeNote.trim()) formData.append('change_note', versionChangeNote.trim());
       await uploadNewVersion(id, formData);
       success('New version uploaded successfully.');
       setVersionOpen(false);
       setVersionFile(null);
+      setVersionChangeNote('');
       load();
       if (tab === 'versions') loadVersions();
     } catch (err) {
@@ -146,6 +172,11 @@ export default function DocumentDetailPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {doc.mime_type === 'application/pdf' && (
+            <button type="button" onClick={handlePreviewPdf} className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5">
+              PDF Preview
+            </button>
+          )}
           <button
             type="button"
             onClick={handleDownload}
@@ -233,7 +264,7 @@ export default function DocumentDetailPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Version</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Changed by</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Change type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Change summary</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Change summary / note</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
@@ -249,7 +280,7 @@ export default function DocumentDetailPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{v.Changer?.name || v.Uploader?.name || '—'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{CHANGE_TYPE_LABEL[v.change_type] || v.change_type}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" title={v.change_summary}>{v.change_summary || '—'}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs" title={v.change_note || v.change_summary}>{v.change_note || v.change_summary || '—'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{v.created_at ? new Date(v.created_at).toLocaleString() : '—'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           {v.file_path && (
@@ -318,12 +349,31 @@ export default function DocumentDetailPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
                 />
               </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Change note (optional)</label>
+                <input
+                  type="text"
+                  value={versionChangeNote}
+                  onChange={(e) => setVersionChangeNote(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent"
+                  placeholder="e.g. Corrected typo on page 2"
+                />
+              </div>
               <div className="flex justify-end gap-2">
                 <button type="button" onClick={() => { setVersionOpen(false); setVersionFile(null); }} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
                 <button type="submit" disabled={uploading || !versionFile} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50">{uploading ? 'Uploading…' : 'Upload'}</button>
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {previewUrl && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/90" onClick={handleClosePreview}>
+          <div className="flex justify-end p-2">
+            <button type="button" onClick={handleClosePreview} className="px-4 py-2 bg-white/10 text-white rounded hover:bg-white/20">Close</button>
+          </div>
+          <iframe src={previewUrl} title="PDF Preview" className="flex-1 w-full min-h-0" />
         </div>
       )}
 

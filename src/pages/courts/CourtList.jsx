@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { listCourts, deactivateCourt, getCourtTypes } from '../../services/courtApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function CourtList() {
   const { isOrgAdmin } = useOrgAuth();
@@ -32,7 +33,7 @@ export default function CourtList() {
       setData(res.data || []);
       setTotal(res.total ?? 0);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load courts');
+      setError(getApiMessage(err, 'Failed to load courts'));
     } finally {
       setLoading(false);
     }
@@ -55,7 +56,7 @@ export default function CourtList() {
       await deactivateCourt(court.id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed');
+      setError(getApiMessage(err, 'Failed'));
     }
   };
 

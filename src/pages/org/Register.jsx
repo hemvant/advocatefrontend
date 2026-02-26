@@ -80,7 +80,7 @@ export default function Register() {
                     checked={accountType === 'ORGANIZATION'}
                     onChange={(e) => setAccountType(e.target.value)}
                   />
-                  <span>Law Firm</span>
+                  <span>Organisation (Law Firm)</span>
                 </label>
                 <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
                   <input
@@ -90,7 +90,7 @@ export default function Register() {
                     checked={accountType === 'SOLO'}
                     onChange={(e) => setAccountType(e.target.value)}
                   />
-                  <span>Individual Advocate</span>
+                  <span>Individual (Solo Advocate)</span>
                 </label>
               </div>
               <button

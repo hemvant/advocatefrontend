@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { listJudges, listCourts, addJudge, updateJudge, deactivateJudge } from '../../services/courtApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function JudgeList() {
   const { isOrgAdmin } = useOrgAuth();
@@ -25,7 +26,7 @@ export default function JudgeList() {
       const { data: res } = await listJudges(params);
       setData(res?.data || []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load judges');
+      setError(getApiMessage(err, 'Failed to load judges'));
     } finally {
       setLoading(false);
     }
@@ -59,7 +60,7 @@ export default function JudgeList() {
       setForm({ court_id: '', name: '', designation: '' });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Add failed');
+      setError(getApiMessage(err, 'Add failed'));
     }
   };
 
@@ -75,7 +76,7 @@ export default function JudgeList() {
       setModal(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 
@@ -85,7 +86,7 @@ export default function JudgeList() {
       await deactivateJudge(judge.id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed');
+      setError(getApiMessage(err, 'Failed'));
     }
   };
 

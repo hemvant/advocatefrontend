@@ -28,6 +28,10 @@ export const updateDocumentMetadata = (id, data) => api.put(`/documents/${id}`, 
 export const softDeleteDocument = (id) => api.delete(`/documents/${id}`);
 
 export const uploadNewVersion = (id, formData) =>
-  api.post(`/documents/${id}/version`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+  api.post(`/documents/${id}/version`, formData);
+
+export const getSignedDownloadUrl = (id, expires = 3600) =>
+  api.get(`/documents/${id}/signed-url`, { params: { expires } });
+
+export const bulkUploadDocuments = (formData, onUploadProgress) =>
+  api.post('/documents/bulk', formData, { onUploadProgress });

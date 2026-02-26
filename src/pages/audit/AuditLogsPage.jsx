@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { listAuditLogs, exportAuditLogs } from '../../services/auditApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const ENTITY_TYPES = ['CLIENT', 'CASE', 'HEARING', 'DOCUMENT', 'COURT', 'EMPLOYEE'];
 const ACTION_TYPES = ['CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'LOGIN', 'LOGOUT', 'VIEW', 'DOWNLOAD', 'ASSIGN', 'MODULE_CHANGE'];
@@ -63,7 +64,7 @@ export default function AuditLogsPage() {
       setData(res.data || []);
       setPagination(res.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load audit logs');
+      setError(getApiMessage(err, 'Failed to load audit logs'));
     } finally {
       setLoading(false);
     }
@@ -98,7 +99,7 @@ export default function AuditLogsPage() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.response?.data?.message || 'Export failed');
+      setError(getApiMessage(err, 'Export failed'));
     } finally {
       setExporting(false);
     }

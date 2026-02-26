@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { verifyEmail } from '../../services/orgApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -21,7 +22,7 @@ export default function VerifyEmail() {
       })
       .catch((err) => {
         setStatus('error');
-        setMessage(err.response?.data?.message || 'Verification failed or link expired.');
+        setMessage(getApiMessage(err, 'Verification failed or link expired.'));
       });
   }, [token]);
 

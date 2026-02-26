@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { listTasks, updateTask, markTaskComplete, reassignTask } from '../../services/taskApi';
 import { getEmployees } from '../../services/orgApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH'];
 const STATUSES = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
@@ -30,7 +31,7 @@ export default function TasksPage() {
       setData(res.data || []);
       setPagination(res.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load tasks');
+      setError(getApiMessage(err, 'Failed to load tasks'));
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ export default function TasksPage() {
       await markTaskComplete(task.id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed');
+      setError(getApiMessage(err, 'Failed'));
     }
   };
 
@@ -78,7 +79,7 @@ export default function TasksPage() {
       setModal(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 
@@ -90,7 +91,7 @@ export default function TasksPage() {
       setModal(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Reassign failed');
+      setError(getApiMessage(err, 'Reassign failed'));
     }
   };
 

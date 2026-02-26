@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '../../services/clientApi';
 import ClientForm from './ClientForm';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function ClientCreate() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export default function ClientCreate() {
       const { data } = await createClient(payload);
       navigate(`/clients/${data.data.id}`);
     } catch (err) {
-      setError(err.response?.data?.message || 'Create failed');
+      setError(getApiMessage(err, 'Create failed'));
     } finally {
       setLoading(false);
     }

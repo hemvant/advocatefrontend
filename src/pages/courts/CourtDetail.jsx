@@ -11,6 +11,7 @@ import {
   getCourtTypes
 } from '../../services/courtApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function CourtDetail() {
   const { id } = useParams();
@@ -61,7 +62,7 @@ export default function CourtDetail() {
       setEditForm(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 
@@ -73,7 +74,7 @@ export default function CourtDetail() {
       setBenchForm({ name: '' });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Add bench failed');
+      setError(getApiMessage(err, 'Add bench failed'));
     }
   };
 
@@ -86,7 +87,7 @@ export default function CourtDetail() {
       setBenchForm({ name: '' });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 
@@ -96,7 +97,7 @@ export default function CourtDetail() {
       await deleteBench(id, benchId);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      setError(getApiMessage(err, 'Delete failed'));
     }
   };
 
@@ -112,7 +113,7 @@ export default function CourtDetail() {
       setRoomForm({ room_number: '', floor: '', bench_id: '' });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Add courtroom failed');
+      setError(getApiMessage(err, 'Add courtroom failed'));
     }
   };
 
@@ -129,7 +130,7 @@ export default function CourtDetail() {
       setRoomForm({ room_number: '', floor: '', bench_id: '' });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 

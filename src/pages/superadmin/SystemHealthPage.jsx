@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getSystemHealth } from '../../services/superAdminApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function SystemHealthPage() {
   const [data, setData] = useState(null);
@@ -18,7 +19,7 @@ export default function SystemHealthPage() {
           const status = err.response?.status;
           const msg = status === 401
             ? 'Log in as Super Admin to view system health.'
-            : err.response?.data?.message || 'Could not load system health.';
+            : getApiMessage(err, 'Could not load system health.');
           setFetchError(msg);
         })
         .finally(() => setLoading(false));

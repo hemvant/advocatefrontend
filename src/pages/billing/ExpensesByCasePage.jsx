@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getExpensesByCase } from '../../services/billingApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function ExpensesByCasePage() {
   const [data, setData] = useState([]);
@@ -10,7 +11,7 @@ export default function ExpensesByCasePage() {
   useEffect(() => {
     getExpensesByCase()
       .then(({ data: res }) => setData(res.data || []))
-      .catch((err) => setError(err.response?.data?.message || 'Failed to load'))
+      .catch((err) => setError(getApiMessage(err, 'Failed to load')))
       .finally(() => setLoading(false));
   }, []);
 

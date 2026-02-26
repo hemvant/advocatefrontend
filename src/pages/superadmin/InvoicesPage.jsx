@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getInvoices, createInvoice, markInvoicePaid, getOrganizations } from '../../services/superAdminApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState([]);
@@ -50,7 +51,7 @@ export default function InvoicesPage() {
       setForm({ organization_id: '', amount: '', currency: 'INR', billing_cycle: 'MONTHLY', period_start: '', period_end: '', due_date: '' });
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Create failed');
+      setError(getApiMessage(err, 'Create failed'));
     } finally {
       setSaving(false);
     }
@@ -61,7 +62,7 @@ export default function InvoicesPage() {
       await markInvoicePaid(id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 

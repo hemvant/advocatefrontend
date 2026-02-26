@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getModules } from '../../services/orgApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
 
 export default function OrgModules() {
-  const { user, hasModule } = useOrgAuth();
+  const { user, hasModule, isSoloOrg } = useOrgAuth();
+  const navigate = useNavigate();
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isSoloOrg) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isSoloOrg, navigate]);
 
   useEffect(() => {
     getModules()

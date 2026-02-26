@@ -18,6 +18,7 @@ import {
   getEmployeeProductivity,
   getCaseAgingBuckets,
 } from '../../services/analyticsApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const CARD_CLASS = 'rounded-xl border border-gray-200 bg-white p-5 shadow-sm';
 const PRIMARY = '#0B1F3A';
@@ -53,19 +54,19 @@ export default function AnalyticsPage() {
   useEffect(() => {
     getCaseDurationByCourt()
       .then((r) => setCaseDuration({ loading: false, data: r.data, error: '' }))
-      .catch((e) => setCaseDuration({ loading: false, data: null, error: e.response?.data?.message || 'Failed to load' }));
+      .catch((e) => setCaseDuration({ loading: false, data: null, error: getApiMessage(e, 'Failed to load') }));
 
     getJudgePerformance()
       .then((r) => setJudgePerf({ loading: false, data: r.data, error: '' }))
-      .catch((e) => setJudgePerf({ loading: false, data: null, error: e.response?.data?.message || 'Failed to load' }));
+      .catch((e) => setJudgePerf({ loading: false, data: null, error: getApiMessage(e, 'Failed to load') }));
 
     getEmployeeProductivity()
       .then((r) => setEmployeeProd({ loading: false, data: r.data, error: '' }))
-      .catch((e) => setEmployeeProd({ loading: false, data: null, error: e.response?.data?.message || 'Failed to load' }));
+      .catch((e) => setEmployeeProd({ loading: false, data: null, error: getApiMessage(e, 'Failed to load') }));
 
     getCaseAgingBuckets()
       .then((r) => setCaseAging({ loading: false, data: r.data, error: '' }))
-      .catch((e) => setCaseAging({ loading: false, data: null, error: e.response?.data?.message || 'Failed to load' }));
+      .catch((e) => setCaseAging({ loading: false, data: null, error: getApiMessage(e, 'Failed to load') }));
   }, []);
 
   const chart1 = caseDuration.data?.chart;

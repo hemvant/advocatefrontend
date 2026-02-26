@@ -4,6 +4,7 @@ import { listTasksByCase, createTask, updateTask, markTaskComplete, reassignTask
 import { getCase } from '../../services/caseApi';
 import { getEmployees } from '../../services/orgApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
@@ -54,7 +55,7 @@ export default function CaseTasksPage() {
       setShowForm(false);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Create failed');
+      setError(getApiMessage(err, 'Create failed'));
     }
   };
 
@@ -72,7 +73,7 @@ export default function CaseTasksPage() {
       setEditId(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 
@@ -81,7 +82,7 @@ export default function CaseTasksPage() {
       await markTaskComplete(task.id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed');
+      setError(getApiMessage(err, 'Failed'));
     }
   };
 
@@ -90,7 +91,7 @@ export default function CaseTasksPage() {
       await reassignTask(taskId, assignedTo ? parseInt(assignedTo, 10) : null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Reassign failed');
+      setError(getApiMessage(err, 'Reassign failed'));
     }
   };
 

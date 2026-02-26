@@ -8,11 +8,14 @@ const MODULE_LINKS = [
   { name: 'Courts', path: '/courts', icon: '⚖️', moduleName: 'Case Management' },
   { name: 'Tasks', path: '/tasks', icon: '✅', moduleName: 'Case Management' },
   { name: 'Document Management', path: '/documents', icon: '📄', end: false, moduleName: 'Document Management' },
+  { name: 'Stamp Duty', path: '/stamp-duty', icon: '📋', moduleName: 'Document Management' },
+  { name: 'Templates', path: '/document-templates', icon: '📝', moduleName: 'Document Management' },
   { name: 'Billing', path: '/billing', icon: '💰', moduleName: 'Billing' },
   { name: 'Calendar', path: '/calendar', icon: '📅', moduleName: 'Calendar' },
   { name: 'Reports', path: '/reports', icon: '📊', moduleName: 'Reports' },
   { name: 'Audit Logs', path: '/audit-logs', icon: '📋', moduleName: 'Reports' },
-  { name: 'Draft generator', path: '/drafts', icon: '✍️', moduleName: 'Case Management' }
+  { name: 'Draft generator', path: '/drafts', icon: '✍️', moduleName: 'Case Management' },
+  { name: 'AI Chat', path: '/ai-chat', icon: '💬', moduleName: 'Case Management' }
 ];
 
 function UpgradeModal({ onClose }) {
@@ -31,7 +34,7 @@ function UpgradeModal({ onClose }) {
 }
 
 export default function OrgSidebar({ open = false, onClose }) {
-  const { user, logout, hasModule, isOrgAdmin, subscriptionInfo, isModuleInPlan } = useOrgAuth();
+  const { user, logout, hasModule, isOrgAdmin, isSoloOrg, subscriptionInfo, isModuleInPlan } = useOrgAuth();
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -129,7 +132,7 @@ export default function OrgSidebar({ open = false, onClose }) {
           );
         })}
         {upgradeModalOpen && <UpgradeModal onClose={() => setUpgradeModalOpen(false)} />}
-        {isOrgAdmin && (
+        {isOrgAdmin && !isSoloOrg && (
           <>
             <div className="my-2 border-t border-white/10" />
             <p className="px-6 py-2 text-xs font-semibold text-white/50 uppercase">Admin</p>

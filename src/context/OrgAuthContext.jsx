@@ -61,6 +61,8 @@ export function OrgAuthProvider({ children }) {
   const refreshUser = () => fetchUser();
 
   const isOrgAdmin = user?.role === 'ORG_ADMIN';
+  const orgType = user?.organization?.type;
+  const isSoloOrg = orgType != null && String(orgType).toLowerCase() === 'solo';
   const assignedModules = user?.Modules || [];
   const allowedModuleNames = subscriptionInfo?.allowedModules?.map((m) => m.name) ?? [];
   const hasModule = (name) => isOrgAdmin || assignedModules.some((m) => m.name === name);
@@ -73,6 +75,7 @@ export function OrgAuthProvider({ children }) {
     logout,
     refreshUser,
     isOrgAdmin,
+    isSoloOrg,
     assignedModules,
     hasModule,
     subscriptionInfo,

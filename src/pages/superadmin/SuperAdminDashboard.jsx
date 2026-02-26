@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getDashboardSummary, getDashboardAnalytics } from '../../services/superAdminApi';
+import { getApiMessage } from '../../services/apiHelpers';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 
 const CARD_CLASS = 'rounded-xl border border-gray-200 bg-white p-5 shadow-sm';
@@ -21,7 +22,7 @@ export default function SuperAdminDashboard() {
         setSummary(r1.data.data);
         setAnalytics(r2.data.data);
       })
-      .catch((e) => setError(e.response?.data?.message || 'Failed to load'))
+      .catch((e) => setError(getApiMessage(e, 'Failed to load')))
       .finally(() => setLoading(false));
   }, []);
 

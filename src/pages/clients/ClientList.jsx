@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { listClients, softDeleteClient, assignClient } from '../../services/clientApi';
 import { getEmployees } from '../../services/orgApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const CATEGORIES = ['INDIVIDUAL', 'CORPORATE', 'GOVERNMENT', 'VIP'];
 const STATUSES = ['ACTIVE', 'CLOSED', 'BLACKLISTED'];
@@ -32,7 +33,7 @@ export default function ClientList() {
       setData(res.data || []);
       setPagination(res.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load clients');
+      setError(getApiMessage(err, 'Failed to load clients'));
     } finally {
       setLoading(false);
     }
@@ -60,7 +61,7 @@ export default function ClientList() {
       await softDeleteClient(client.id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      setError(getApiMessage(err, 'Delete failed'));
     }
   };
 
@@ -76,7 +77,7 @@ export default function ClientList() {
       setAssignModal(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Assign failed');
+      setError(getApiMessage(err, 'Assign failed'));
     }
   };
 

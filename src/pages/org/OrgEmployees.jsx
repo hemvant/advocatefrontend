@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getEmployees, createEmployee, updateEmployee, getEmployeeModules, assignEmployeeModules, getModules, resetEmployeePassword } from '../../services/orgApi';
 import { useOrgAuth } from '../../context/OrgAuthContext';
 import PasswordInput from '../../components/PasswordInput';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function OrgEmployees() {
-  const { user, isOrgAdmin } = useOrgAuth();
+  const { user, isOrgAdmin, isSoloOrg } = useOrgAuth();
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,12 +18,18 @@ export default function OrgEmployees() {
   const [resetPwdLoading, setResetPwdLoading] = useState(false);
   const [resetPwdError, setResetPwdError] = useState('');
 
+  useEffect(() => {
+    if (isSoloOrg) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isSoloOrg, navigate]);
+
   const load = async () => {
     try {
       const { data } = await getEmployees();
       setEmployees(data.data || []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load employees');
+      setError(getApiMessage(err, 'Failed to load employees'));
     } finally {
       setLoading(false);
     }
@@ -54,7 +63,7 @@ export default function OrgEmployees() {
       setModal(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Create failed');
+      setError(getApiMessage(err, 'Create failed'));
     }
   };
 
@@ -65,7 +74,7 @@ export default function OrgEmployees() {
       setModal(null);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 
@@ -75,7 +84,7 @@ export default function OrgEmployees() {
       await assignEmployeeModules(modal.id, modal.assigned);
       setModal(null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     }
   };
 
@@ -102,7 +111,7 @@ export default function OrgEmployees() {
       await resetEmployeePassword(resetPwdModal.id, resetPwdForm.new_password);
       setResetPwdModal(null);
     } catch (err) {
-      setResetPwdError(err.response?.data?.message || 'Reset failed');
+      setResetPwdError(getApiMessage(err, 'Reset failed'));
     } finally {
       setResetPwdLoading(false);
     }

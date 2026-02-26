@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { createCase } from '../../services/caseApi';
 import { getSetupStatus } from '../../services/orgApi';
 import CaseForm from './CaseForm';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function CaseCreate() {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ export default function CaseCreate() {
       if (body.error === 'Missing Master Data' && Array.isArray(body.missing)) {
         setMissingMasterData(body.missing);
       } else {
-        setError(body.message || err.message || 'Create failed');
+        setError(getApiMessage(err, 'Create failed'));
       }
     } finally {
       setLoading(false);

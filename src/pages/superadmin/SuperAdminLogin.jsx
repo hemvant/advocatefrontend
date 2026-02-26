@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { superAdminLogin } from '../../services/superAdminApi';
 import { useSuperAdminAuth } from '../../context/SuperAdminAuthContext';
 import PasswordInput from '../../components/PasswordInput';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function SuperAdminLogin() {
   const [email, setEmail] = useState('');
@@ -21,7 +22,7 @@ export default function SuperAdminLogin() {
       loginSuccess(data.user);
       navigate('/super-admin/dashboard', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(getApiMessage(err, 'Login failed'));
     } finally {
       setLoading(false);
     }

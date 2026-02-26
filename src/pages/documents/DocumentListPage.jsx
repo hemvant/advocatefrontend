@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { listDocuments, searchDocuments, softDeleteDocument, downloadDocument } from '../../services/documentApi';
 import { listCases } from '../../services/caseApi';
 import UploadDocumentModal from '../../components/documents/UploadDocumentModal';
+import BulkUploadDocumentModal from '../../components/documents/BulkUploadDocumentModal';
 import { useNotification } from '../../context/NotificationContext';
 import { getApiMessage } from '../../services/apiHelpers';
 import TableSkeleton from '../../components/ui/TableSkeleton';
@@ -31,6 +32,7 @@ export default function DocumentListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const { success, error: showError } = useNotification();
@@ -119,11 +121,21 @@ export default function DocumentListPage() {
     loadCases();
   };
 
+  const handleBulkUploadDone = () => {
+    setBulkUploadOpen(false);
+    success('Documents uploaded successfully.');
+    load();
+    loadCases();
+  };
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold text-primary">Document Management</h1>
-        <Button onClick={() => setUploadOpen(true)}>Upload document</Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setUploadOpen(true)}>Upload document</Button>
+          <Button variant="secondary" onClick={() => setBulkUploadOpen(true)}>Bulk upload</Button>
+        </div>
       </div>
 
       {error && <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">{error}</div>}
@@ -239,6 +251,9 @@ export default function DocumentListPage() {
                           {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                          {doc.mime_type === 'application/pdf' && (
+                            <Link to={`/documents/${doc.id}?preview=1`} className="text-primary hover:underline mr-3">Preview</Link>
+                          )}
                           <button type="button" onClick={() => handleDownload(doc)} className="text-primary hover:underline mr-3">Download</button>
                           <button type="button" onClick={() => setDeleteTarget(doc)} className="text-red-600 hover:underline">Delete</button>
                         </td>
@@ -281,6 +296,13 @@ export default function DocumentListPage() {
           cases={cases}
           onClose={() => setUploadOpen(false)}
           onSuccess={handleUploadDone}
+        />
+      )}
+      {bulkUploadOpen && (
+        <BulkUploadDocumentModal
+          cases={cases}
+          onClose={() => setBulkUploadOpen(false)}
+          onSuccess={handleBulkUploadDone}
         />
       )}
 

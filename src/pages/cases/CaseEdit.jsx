@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCase, updateCase } from '../../services/caseApi';
 import CaseForm from './CaseForm';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function CaseEdit() {
   const { id } = useParams();
@@ -24,7 +25,7 @@ export default function CaseEdit() {
       await updateCase(id, payload);
       navigate(`/cases/${id}`);
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      setError(getApiMessage(err, 'Update failed'));
     } finally {
       setLoading(false);
     }

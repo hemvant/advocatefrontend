@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getPackages, createPackage, updatePackage, deletePackage, getAllModules } from '../../services/superAdminApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function PackagesPage() {
   const [packages, setPackages] = useState([]);
@@ -80,7 +81,7 @@ export default function PackagesPage() {
       setModalOpen(false);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Save failed');
+      setError(getApiMessage(err, 'Save failed'));
     } finally {
       setSaving(false);
     }
@@ -92,7 +93,7 @@ export default function PackagesPage() {
       await deletePackage(pkg.id);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
+      setError(getApiMessage(err, 'Delete failed'));
     }
   };
 

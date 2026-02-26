@@ -34,6 +34,8 @@ import HearingDetail from './pages/calendar/HearingDetail';
 import DocumentListPage from './pages/documents/DocumentListPage';
 import DocumentDetailPage from './pages/documents/DocumentDetailPage';
 import CaseDocumentsPage from './pages/documents/CaseDocumentsPage';
+import StampDutyPage from './pages/documents/StampDutyPage';
+import DocumentTemplatesPage from './pages/documents/DocumentTemplatesPage';
 import CourtList from './pages/courts/CourtList';
 import CourtCreate from './pages/courts/CourtCreate';
 import CourtDetail from './pages/courts/CourtDetail';
@@ -45,8 +47,13 @@ import TasksPage from './pages/tasks/TasksPage';
 import CaseTasksPage from './pages/tasks/CaseTasksPage';
 import BillingPage from './pages/billing/BillingPage';
 import ExpensesByCasePage from './pages/billing/ExpensesByCasePage';
+import ExpensesPage from './pages/billing/ExpensesPage';
+import InvoiceDetailPage from './pages/billing/InvoiceDetailPage';
+import GstSummaryPage from './pages/billing/GstSummaryPage';
+import TdsReportPage from './pages/billing/TdsReportPage';
 import AnalyticsPage from './pages/reports/AnalyticsPage';
 import DraftGeneratorPage from './pages/ai/DraftGeneratorPage';
+import AIChatPage from './pages/ai/AIChatPage';
 
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'));
 const SuperAdminOrganizationsPage = lazy(() => import('./pages/superadmin/SuperAdminOrganizationsPage'));
@@ -56,6 +63,7 @@ const PlatformAuditLogsPage = lazy(() => import('./pages/superadmin/PlatformAudi
 const SystemHealthPage = lazy(() => import('./pages/superadmin/SystemHealthPage'));
 const PackagesPage = lazy(() => import('./pages/superadmin/PackagesPage'));
 const InvoicesPage = lazy(() => import('./pages/superadmin/InvoicesPage'));
+const SuperAdminAiConfigPage = lazy(() => import('./pages/superadmin/SuperAdminAiConfigPage'));
 
 function LazyRoute({ children }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
@@ -97,6 +105,7 @@ export default function App() {
             <Route path="invoices" element={<LazyRoute><InvoicesPage /></LazyRoute>} />
             <Route path="audit-logs" element={<LazyRoute><PlatformAuditLogsPage /></LazyRoute>} />
             <Route path="system-health" element={<LazyRoute><SystemHealthPage /></LazyRoute>} />
+            <Route path="ai-config" element={<LazyRoute><SuperAdminAiConfigPage /></LazyRoute>} />
           </Route>
 
           <Route path="/login" element={<OrgLogin />} />
@@ -135,12 +144,19 @@ export default function App() {
             <Route path="audit-logs" element={<AuditLogsPage />} />
             <Route path="documents" element={<DocumentListPage />} />
             <Route path="documents/:id" element={<DocumentDetailPage />} />
+            <Route path="stamp-duty" element={<StampDutyPage />} />
+            <Route path="document-templates" element={<DocumentTemplatesPage />} />
             <Route path="billing" element={<BillingPage />} />
-            <Route path="billing/expenses" element={<ExpensesByCasePage />} />
+            <Route path="billing/invoices/:id" element={<InvoiceDetailPage />} />
+            <Route path="billing/expenses-by-case" element={<ExpensesByCasePage />} />
+            <Route path="billing/expenses" element={<ExpensesPage />} />
+            <Route path="billing/gst-summary" element={<GstSummaryPage />} />
+            <Route path="billing/tds" element={<TdsReportPage />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="hearings/:id" element={<HearingDetail />} />
             <Route path="reports" element={<AnalyticsPage />} />
             <Route path="drafts" element={<DraftGeneratorPage />} />
+            <Route path="ai-chat" element={<AIChatPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

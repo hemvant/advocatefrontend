@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getOrganizations, createOrganization, updateOrganization, getOrganizationModules, assignOrganizationModules, getAllModules, impersonateOrganization, getPackages } from '../../services/superAdminApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 export default function SuperAdminOrganizationsPage() {
   const [list, setList] = useState([]);
@@ -25,7 +26,7 @@ export default function SuperAdminOrganizationsPage() {
       setList(data.data || []);
       setPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
     } catch (e) {
-      setError(e.response?.data?.message || 'Failed to load');
+      setError(getApiMessage(e, 'Failed to load'));
     } finally {
       setLoading(false);
     }
@@ -75,7 +76,7 @@ export default function SuperAdminOrganizationsPage() {
       await impersonateOrganization(orgId);
       window.open('/', '_blank');
     } catch (e) {
-      setError(e.response?.data?.message || 'Impersonation failed');
+      setError(getApiMessage(e, 'Impersonation failed'));
     }
   };
 
@@ -89,7 +90,7 @@ export default function SuperAdminOrganizationsPage() {
       setModal(null);
       load(1);
     } catch (err) {
-      setError(err.response?.data?.message || 'Create failed');
+      setError(getApiMessage(err, 'Create failed'));
     }
   };
 
@@ -100,7 +101,7 @@ export default function SuperAdminOrganizationsPage() {
       setModal(null);
       load(pagination.page);
     } catch (e) {
-      setError(e.response?.data?.message || 'Update failed');
+      setError(getApiMessage(e, 'Update failed'));
     }
   };
 
@@ -111,7 +112,7 @@ export default function SuperAdminOrganizationsPage() {
       setModal(null);
       load(pagination.page);
     } catch (e) {
-      setError(e.response?.data?.message || 'Update failed');
+      setError(getApiMessage(e, 'Update failed'));
     }
   };
 

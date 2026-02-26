@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getDraftTemplates, generateDraft } from '../../services/aiApi';
+import { getApiMessage } from '../../services/apiHelpers';
 
 const TEMPLATE_IDS = ['LEGAL_NOTICE', 'AFFIDAVIT', 'VAKALATNAMA'];
 
@@ -31,7 +32,7 @@ export default function DraftGeneratorPage() {
       const { data } = await generateDraft(selectedTemplate, payload);
       setDraftText(data.draft_text || '');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to generate draft');
+      setError(getApiMessage(err, 'Failed to generate draft'));
     } finally {
       setLoading(false);
     }
